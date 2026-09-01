@@ -61,10 +61,30 @@
             padding: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 1.4rem; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
+
+        /* 手動刷新按鈕 */
+        .refresh-btn {
+            background: #2d2d3f;
+            border: 1px solid #3d3d4f;
+            color: #38bdf8;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: #3d3d52; }
+        .refresh-btn.spinning i { animation: spin 1s linear infinite; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         
         .controls {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
         }
         .controls .label { color: #8e8e9e; font-size: 14px; white-space: nowrap; }
         .city-select {
@@ -76,6 +96,18 @@
             color: #fff;
             font-size: 15px;
         }
+
+        /* 測站資訊列與更新時間 */
+        .meta-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #a0a0b0;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        .obs-time-tag { color: #f59e0b; font-weight: 500; }
 
         /* 即時氣象資訊卡 */
         .realtime-info-box {
@@ -97,13 +129,6 @@
         }
         .info-card-item span { font-size: 12px; color: #9e9e9e; }
         .info-card-item b { font-size: 16px; color: #38bdf8; }
-
-        .station-tag {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 10px;
-            text-align: right;
-        }
 
         /* 圖表容器 */
         .chart-box {
@@ -139,7 +164,6 @@
             border-radius: 12px; border: 2px solid #3d3d4f;
         }
 
-        /* 氣象標籤 */
         .weather-badge {
             display: flex; justify-content: center; align-items: center;
             width: 38px; height: 38px; border-radius: 50%; color: white;
@@ -168,8 +192,14 @@
         <!-- 儀表板頁面 -->
         <div id="dashboardPanel" class="content-panel active original-dashboard">
             <div class="header">
-                <i class="fas fa-cloud-sun" style="color: #f59e0b;"></i>
-                <h2>全台 22 縣市即時氣象</h2>
+                <div class="header-title">
+                    <i class="fas fa-cloud-sun" style="color: #f59e0b;"></i>
+                    <h2>全台 22 縣市即時氣象</h2>
+                </div>
+                <!-- 重新整理按鈕 -->
+                <button class="refresh-btn" id="refreshBtn" onclick="fetchAllStationData(true)">
+                    <i class="fas fa-sync-alt"></i> 重新整理
+                </button>
             </div>
             
             <!-- 22 縣市下拉選單 -->
@@ -211,7 +241,11 @@
                 </select>
             </div>
 
-            <div class="station-tag" id="currentStationTag">代表測站：資料載入中...</div>
+            <!-- 測站與資料觀測時間標籤 -->
+            <div class="meta-info-bar">
+                <span id="currentStationTag">代表測站：載入中...</span>
+                <span id="obsTimeTag" class="obs-time-tag">觀測時間：--:--</span>
+            </div>
 
             <!-- 選擇縣市後的即時觀測數據區 -->
             <div class="realtime-info-box">
@@ -258,10 +292,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ⚠️ 請替換為你在中央氣象署開放資料平臺申請到的授權碼 API Key
-        const CWA_API_KEY = "CWA-8BC01589-C3CD-4A80-9A3B-1AFA46E9F246";
+        // ⚠️ 請修改為你在中央氣象署申請的 API Key
+        const CWA_API_KEY = "YOUR_CWA_API_KEY";
 
-        // 22 縣市對應氣象署官方權威代表測站名稱或 ID
         const CITY_PRIMARY_STATIONS = {
             "基隆市": ["基隆"],
             "臺北市": ["臺北", "松山"],
@@ -318,8 +351,21 @@
             return '靜風';
         }
 
-        // 同時抓取局屬氣象站 (O-A0003-001) 與 自動氣象站 (O-A0001-001) 確保 22 縣市無遺漏
-        async function fetchAllStationData() {
+        // 時間格式化 (例如：06:20)
+        function formatObsTime(dateTimeStr) {
+            if (!dateTimeStr) return '--:--';
+            const date = new Date(dateTimeStr);
+            if (isNaN(date.getTime())) return dateTimeStr.substring(11, 16) || '--:--';
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        // 載入全台氣象站資料
+        async function fetchAllStationData(isManualRefresh = false) {
+            const btn = document.getElementById('refreshBtn');
+            if (btn) btn.classList.add('spinning');
+
             const timeStamp = Date.now();
             const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_t=${timeStamp}`;
             const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_t=${timeStamp}`;
@@ -333,22 +379,23 @@
                 const list1 = res1.records?.Station || [];
                 const list2 = res2.records?.Station || [];
                 
-                // 合併兩個資料集
                 weatherStationData = [...list1, ...list2];
 
                 loadCityData(); 
                 if (mapInitialized) renderMapMarkers();
             } catch (err) {
                 console.error("無法取得氣象署資料:", err);
+            } finally {
+                setTimeout(() => {
+                    if (btn) btn.classList.remove('spinning');
+                }, 500);
             }
         }
 
-        // 準確解析與對應縣市主測站
         function loadCityData() {
             const selectedCity = document.getElementById('citySelect').value;
             const primaryTargets = CITY_PRIMARY_STATIONS[selectedCity] || [];
 
-            // 1. 篩選出屬於該縣市的所有測站
             const cityStations = weatherStationData.filter(s => {
                 const county = s.GeoInfo?.CountyName || "";
                 return county === selectedCity || county === selectedCity.replace('臺', '台');
@@ -356,28 +403,28 @@
 
             let targetStation = null;
 
-            // 2. 優先配對官方主要代表測站
             for (let nameKey of primaryTargets) {
                 targetStation = cityStations.find(s => s.StationName === nameKey || s.StationName === nameKey + "氣象站");
                 if (targetStation) break;
             }
 
-            // 3. 若無精準匹配，找含有縣市名稱的測站
             if (!targetStation) {
                 targetStation = cityStations.find(s => s.StationName.includes(selectedCity.replace('市','').replace('縣','')));
             }
 
-            // 4. 退而求其次，取該縣市有有效溫度的第一個測站
             if (!targetStation && cityStations.length > 0) {
                 targetStation = cityStations.find(s => parseFloat(s.WeatherElement?.AirTemperature) > -50) || cityStations[0];
             }
 
             if (targetStation) {
-                document.getElementById('currentStationTag').innerText = `代表測站：${targetStation.StationName} (${targetStation.GeoInfo?.CountyName || ''}${targetStation.GeoInfo?.TownName || ''})`;
+                document.getElementById('currentStationTag').innerText = `代表測站：${targetStation.StationName}`;
+                
+                // 顯示該測站最新氣象觀測時間
+                const obsTime = targetStation.ObsTime?.DateTime;
+                document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(obsTime)}`;
 
                 const temp = parseFloat(targetStation.WeatherElement?.AirTemperature);
                 
-                // 取得雨量 (相容 RainElement / DailyAccumulation / Now.Precipitation)
                 let rain = parseFloat(targetStation.WeatherElement?.Now?.Precipitation);
                 if (isNaN(rain)) rain = parseFloat(targetStation.WeatherElement?.DailyAccumulation);
                 if (isNaN(rain)) rain = 0;
@@ -392,6 +439,7 @@
                 document.getElementById('liveRain').innerText = rain >= 0 ? `${rain.toFixed(1)} mm` : '0 mm';
             } else {
                 document.getElementById('currentStationTag').innerText = `代表測站：無可用測站資料`;
+                document.getElementById('obsTimeTag').innerText = `觀測時間：--:--`;
                 document.getElementById('liveTemp').innerText = '無資料';
                 document.getElementById('liveWind').innerText = '--';
                 document.getElementById('liveHumidity').innerText = '-- %';
@@ -459,6 +507,7 @@
 
                 const windSpeed = parseFloat(station.WeatherElement?.WindSpeed);
                 const windDir = parseFloat(station.WeatherElement?.WindDirection);
+                const obsTime = station.ObsTime?.DateTime;
 
                 if (isNaN(lat) || isNaN(lng)) return;
 
@@ -481,6 +530,7 @@
                  .bindPopup(`
                     <div class="popup-card">
                         <h4>${station.StationName}</h4>
+                        <p>🕒 <b>觀測時間：</b>${formatObsTime(obsTime)}</p>
                         <p>📍 <b>區域：</b>${station.GeoInfo?.CountyName || ''} ${station.GeoInfo?.TownName || ''}</p>
                         <p>🌡️ <b>氣溫：</b>${(temp > -50 && !isNaN(temp)) ? temp + ' °C' : '無資料'}</p>
                         <p>🌧️ <b>雨量：</b>${(rain >= 0 && !isNaN(rain)) ? rain + ' mm' : '無資料'}</p>
