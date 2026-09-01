@@ -75,6 +75,43 @@
         .action-btn.spinning i { animation: spin 1s linear infinite; }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 警特報卡片樣式 */
+        .warning-alert-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .warning-alert-box.active { display: block; }
+        .warning-title {
+            color: #f87171;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .warning-content {
+            color: #fca5a5;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .no-warning-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #34d399;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
         
         .controls-grid {
             display: grid;
@@ -195,6 +232,17 @@
                     </button>
                 </div>
             </div>
+
+            <!-- 警特報卡片區塊 -->
+            <div id="warningAlertBox" class="warning-alert-box">
+                <div class="warning-title">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="warningTitleText">氣象警特報</span>
+                </div>
+                <div id="warningContentText" class="warning-content">--</div>
+            </div>
+            <div id="noWarningBox" class="no-warning-box">
+                <i class="fas fa-check-circle"></i> 目前此區域無氣象警特報
+            </div>
             
             <div class="controls-grid">
                 <div class="control-group">
@@ -264,7 +312,8 @@
         let currentMapMode = 'temp'; 
         let currentMarkersLayer = L.layerGroup();
         let weatherStationData = [];
-        let forecastTownData = []; // 存放預報資料
+        let forecastTownData = [];
+        let warningData = []; // 警特報資料
         let cityTownMapping = {};
 
         function switchMainPage(pageId) {
@@ -342,22 +391,25 @@
             const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
             // 2. 局屬氣象站
             const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            // 3. 鄉鎮未來1週天氣預報 (API: F-D0047-091)
+            // 3. 鄉鎮預報 (API: F-D0047-091)
             const url3 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-091?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            // 4. 天氣警特報 (API: W-C0033-001)
+            const url4 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
-                const [res1, res2, res3] = await Promise.all([
+                const [res1, res2, res3, res4] = await Promise.all([
                     fetch(url1).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
                     fetch(url2).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
-                    fetch(url3).then(r => r.json()).catch(() => ({ records: { Locations: [] } }))
+                    fetch(url3).then(r => r.json()).catch(() => ({ records: { Locations: [] } })),
+                    fetch(url4).then(r => r.json()).catch(() => ({ records: { location: [] } }))
                 ]);
 
                 const list1 = res1.records?.Station || [];
                 const list2 = res2.records?.Station || [];
                 weatherStationData = [...list1, ...list2];
 
-                // 解析鄉鎮預報資料庫
                 forecastTownData = res3.records?.Locations?.[0]?.Location || [];
+                warningData = res4.records?.location || [];
 
                 if (weatherStationData.length === 0) {
                     document.getElementById('currentStationTag').innerText = "⚠️ 找不到資料，請檢查 API Key 或網路";
@@ -445,9 +497,48 @@
             renderCurrentStationData();
         }
 
+        // 解析警特報資料
+        function checkCityWarnings(cityName) {
+            const alertBox = document.getElementById('warningAlertBox');
+            const noAlertBox = document.getElementById('noWarningBox');
+            const titleEl = document.getElementById('warningTitleText');
+            const contentEl = document.getElementById('warningContentText');
+
+            const matchedLocation = warningData.find(loc => {
+                const name = (loc.locationName || "").replace('台', '臺');
+                return name === cityName;
+            });
+
+            if (matchedLocation && matchedLocation.hazardConditions && matchedLocation.hazardConditions.hazards.length > 0) {
+                const hazards = matchedLocation.hazardConditions.hazards;
+                let warningTitles = [];
+                let warningTexts = [];
+
+                hazards.forEach(h => {
+                    const info = h.info || {};
+                    warningTitles.push(info.phenomena || "特別天氣");
+                    if (info.significance) {
+                        warningTexts.push(`【${info.phenomena}】${info.significance}`);
+                    }
+                });
+
+                titleEl.innerText = `⚠️ ${cityName} - ${warningTitles.join(' / ')}`;
+                contentEl.innerText = warningTexts.join('\n') || "該地區目前有發布氣象特報，請注意防範。";
+                
+                alertBox.classList.add('active');
+                noAlertBox.style.display = 'none';
+            } else {
+                alertBox.classList.remove('active');
+                noAlertBox.style.display = 'flex';
+            }
+        }
+
         function renderCurrentStationData() {
             const selectedCity = document.getElementById('citySelect').value;
             const selectedTown = document.getElementById('townSelect').value;
+
+            // 檢查該縣市警特報
+            checkCityWarnings(selectedCity);
 
             let matchedStations = weatherStationData.filter(s => {
                 const county = (s.GeoInfo?.CountyName || "").replace('台', '臺');
@@ -486,18 +577,15 @@
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
             document.getElementById('liveRain').innerText = data.rain >= 0 ? `${data.rain.toFixed(1)} mm` : '0 mm';
 
-            // 抓取真實鄉鎮的未來天氣數據繪製折線圖
             loadRealForecastData(selectedCity, selectedTown || targetStation.GeoInfo?.TownName);
         }
 
-        // 解析 F-D0047-091 API 內的真實預報氣溫數據
         function loadRealForecastData(cityName, townName) {
             let matchedTown = forecastTownData.find(loc => {
                 const locName = loc.LocationName || "";
                 return locName === townName;
             });
 
-            // 若找不到精準鄉鎮，則抓該縣市內第一個鄉鎮當作替代
             if (!matchedTown && forecastTownData.length > 0) {
                 matchedTown = forecastTownData[0];
             }
@@ -516,7 +604,6 @@
             let minTemps = [];
 
             if (maxTempEl && maxTempEl.Time) {
-                // 每隔 2 個時段抓一天 (12小時為一個單位)
                 for (let i = 0; i < 4; i++) {
                     const timeObj = maxTempEl.Time[i * 2] || maxTempEl.Time[i];
                     const val = parseFloat(timeObj?.ElementValue?.[0]?.Value || timeObj?.ElementValue?.Value);
@@ -532,7 +619,6 @@
                 }
             }
 
-            // 防呆預設值
             if (maxTemps.length < 4) maxTemps = [28, 29, 30, 28];
             if (minTemps.length < 4) minTemps = [23, 24, 24, 23];
 
