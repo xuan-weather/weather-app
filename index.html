@@ -292,7 +292,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ⚠️ 請修改為你在中央氣象署申請的 API Key
+        // 氣象署 API 金鑰
         const CWA_API_KEY = "CWA-8BC01589-C3CD-4A80-9A3B-1AFA46E9F246";
 
         const CITY_PRIMARY_STATIONS = {
@@ -351,29 +351,60 @@
             return '靜風';
         }
 
-        // 時間格式化 (例如：06:20)
         function formatObsTime(dateTimeStr) {
             if (!dateTimeStr) return '--:--';
             const date = new Date(dateTimeStr);
-            if (isNaN(date.getTime())) return dateTimeStr.substring(11, 16) || '--:--';
+            if (isNaN(date.getTime())) {
+                return dateTimeStr.length >= 16 ? dateTimeStr.substring(11, 16) : dateTimeStr;
+            }
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return `${hours}:${minutes}`;
         }
 
-        // 載入全台氣象站資料
+        // 解析測站數據（自動相容多種欄位命名結構）
+        function parseStationElement(station) {
+            const we = station.WeatherElement || {};
+            
+            // 氣溫
+            let temp = parseFloat(we.AirTemperature ?? we.TEMP);
+            
+            // 雨量
+            let rain = parseFloat(we.Now?.Precipitation ?? we.DailyAccumulation ?? we.NOW?.Precipitation);
+            if (isNaN(rain)) rain = 0;
+
+            // 風速與風向
+            let windSpeed = parseFloat(we.WindSpeed ?? we.WDSD) || 0;
+            let windDir = parseFloat(we.WindDirection ?? we.WDIR) || 0;
+
+            // 相對濕度
+            let humidity = we.RelativeHumidity ?? we.HUMD ?? '--';
+
+            // 觀測時間
+            let obsTime = station.ObsTime?.DateTime || station.ObsTime || '--';
+
+            return { temp, rain, windSpeed, windDir, humidity, obsTime };
+        }
+
+        // 讀取 API 資料
         async function fetchAllStationData(isManualRefresh = false) {
             const btn = document.getElementById('refreshBtn');
             if (btn) btn.classList.add('spinning');
 
-            const timeStamp = Date.now();
-            const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_t=${timeStamp}`;
-            const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_t=${timeStamp}`;
+if (!CWA_API_KEY || CWA_API_KEY === "YOUR_CWA_API_KEY") {
+                document.getElementById('currentStationTag').innerText = "❌ 請填寫有效的 API Key";
+                if (btn) btn.classList.remove('spinning');
+                return;
+            }
+
+            const nonce = Date.now();
+            const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
             
             try {
                 const [res1, res2] = await Promise.all([
-                    fetch(url1, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
-                    fetch(url2, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } }))
+                    fetch(url1).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
+                    fetch(url2).then(r => r.json()).catch(() => ({ records: { Station: [] } }))
                 ]);
 
                 const list1 = res1.records?.Station || [];
@@ -381,10 +412,15 @@
                 
                 weatherStationData = [...list1, ...list2];
 
-                loadCityData(); 
-                if (mapInitialized) renderMapMarkers();
+                if (weatherStationData.length === 0) {
+                    document.getElementById('currentStationTag').innerText = "⚠️ 找不到資料，請檢查 API Key 或網路";
+                } else {
+                    loadCityData(); 
+                    if (mapInitialized) renderMapMarkers();
+                }
             } catch (err) {
                 console.error("無法取得氣象署資料:", err);
+                document.getElementById('currentStationTag').innerText = "⚠️ 連線失敗";
             } finally {
                 setTimeout(() => {
                     if (btn) btn.classList.remove('spinning');
@@ -396,47 +432,37 @@
             const selectedCity = document.getElementById('citySelect').value;
             const primaryTargets = CITY_PRIMARY_STATIONS[selectedCity] || [];
 
+            // 取得該縣市的所有測站
             const cityStations = weatherStationData.filter(s => {
-                const county = s.GeoInfo?.CountyName || "";
-                return county === selectedCity || county === selectedCity.replace('臺', '台');
+                const county = s.GeoInfo?.CountyName || s.Location || "";
+                return county.includes(selectedCity) || county.includes(selectedCity.replace('臺', '台'));
             });
 
             let targetStation = null;
 
+            // 優先對應代表測站
             for (let nameKey of primaryTargets) {
-                targetStation = cityStations.find(s => s.StationName === nameKey || s.StationName === nameKey + "氣象站");
-                if (targetStation) break;
-            }
-
-            if (!targetStation) {
-                targetStation = cityStations.find(s => s.StationName.includes(selectedCity.replace('市','').replace('縣','')));
+                const matched = cityStations.filter(s => s.StationName === nameKey || s.StationName === nameKey + "氣象站");
+                if (matched.length > 0) {
+                    targetStation = matched[0];
+                    break;
+                }
             }
 
             if (!targetStation && cityStations.length > 0) {
-                targetStation = cityStations.find(s => parseFloat(s.WeatherElement?.AirTemperature) > -50) || cityStations[0];
+                targetStation = cityStations[0];
             }
 
             if (targetStation) {
+                const data = parseStationElement(targetStation);
+
                 document.getElementById('currentStationTag').innerText = `代表測站：${targetStation.StationName}`;
-                
-                // 顯示該測站最新氣象觀測時間
-                const obsTime = targetStation.ObsTime?.DateTime;
-                document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(obsTime)}`;
+                document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(data.obsTime)}`;
 
-                const temp = parseFloat(targetStation.WeatherElement?.AirTemperature);
-                
-                let rain = parseFloat(targetStation.WeatherElement?.Now?.Precipitation);
-                if (isNaN(rain)) rain = parseFloat(targetStation.WeatherElement?.DailyAccumulation);
-                if (isNaN(rain)) rain = 0;
-
-                const windSpeed = parseFloat(targetStation.WeatherElement?.WindSpeed) || 0;
-                const windDir = parseFloat(targetStation.WeatherElement?.WindDirection) || 0;
-                const humidity = targetStation.WeatherElement?.RelativeHumidity || '--';
-
-                document.getElementById('liveTemp').innerText = (temp > -50 && !isNaN(temp)) ? `${temp.toFixed(1)} °C` : '-- °C';
-                document.getElementById('liveWind').innerText = `${getWindDirectionText(windDir)} ${windSpeed.toFixed(1)} m/s`;
-                document.getElementById('liveHumidity').innerText = humidity !== '--' ? `${humidity} %` : '-- %';
-                document.getElementById('liveRain').innerText = rain >= 0 ? `${rain.toFixed(1)} mm` : '0 mm';
+                document.getElementById('liveTemp').innerText = (!isNaN(data.temp) && data.temp > -50) ? `${data.temp.toFixed(1)} °C` : '-- °C';
+                document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s`;
+                document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
+                document.getElementById('liveRain').innerText = data.rain >= 0 ? `${data.rain.toFixed(1)} mm` : '0 mm';
             } else {
                 document.getElementById('currentStationTag').innerText = `代表測站：無可用測站資料`;
                 document.getElementById('obsTimeTag').innerText = `觀測時間：--:--`;
@@ -473,7 +499,6 @@
             });
         }
 
-        // 地圖功能
         function initMap() {
             map = L.map('map').setView([23.8, 120.3], 7);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
@@ -500,24 +525,18 @@
                 const coords = station.GeoInfo?.Coordinates?.find(c => c.CoordinateName === "WGS84") || {};
                 const lat = parseFloat(coords.StationLatitude);
                 const lng = parseFloat(coords.StationLongitude);
-                const temp = parseFloat(station.WeatherElement?.AirTemperature);
                 
-                let rain = parseFloat(station.WeatherElement?.Now?.Precipitation);
-                if (isNaN(rain)) rain = parseFloat(station.WeatherElement?.DailyAccumulation);
-
-                const windSpeed = parseFloat(station.WeatherElement?.WindSpeed);
-                const windDir = parseFloat(station.WeatherElement?.WindDirection);
-                const obsTime = station.ObsTime?.DateTime;
-
                 if (isNaN(lat) || isNaN(lng)) return;
+
+                const data = parseStationElement(station);
 
                 let valText = '--'; let bgColor = '#6b7280';
                 if (currentMapMode === 'temp') {
-                    if (temp > -50 && !isNaN(temp)) { valText = `${Math.round(temp)}°`; bgColor = getMapTempColor(temp); }
+                    if (!isNaN(data.temp) && data.temp > -50) { valText = `${Math.round(data.temp)}°`; bgColor = getMapTempColor(data.temp); }
                 } else if (currentMapMode === 'rain') {
-                    if (rain >= 0 && !isNaN(rain)) { valText = rain === 0 ? '0' : rain.toFixed(1); bgColor = getMapRainColor(rain); }
+                    if (data.rain >= 0) { valText = data.rain === 0 ? '0' : data.rain.toFixed(1); bgColor = getMapRainColor(data.rain); }
                 } else if (currentMapMode === 'wind') {
-                    if (windSpeed >= 0 && !isNaN(windSpeed)) { valText = `${windSpeed.toFixed(1)}`; bgColor = getMapWindColor(windSpeed); }
+                    if (data.windSpeed >= 0) { valText = `${data.windSpeed.toFixed(1)}`; bgColor = getMapWindColor(data.windSpeed); }
                 }
 
                 const customIcon = L.divIcon({
@@ -530,11 +549,11 @@
                  .bindPopup(`
                     <div class="popup-card">
                         <h4>${station.StationName}</h4>
-                        <p>🕒 <b>觀測時間：</b>${formatObsTime(obsTime)}</p>
+                        <p>🕒 <b>觀測時間：</b>${formatObsTime(data.obsTime)}</p>
                         <p>📍 <b>區域：</b>${station.GeoInfo?.CountyName || ''} ${station.GeoInfo?.TownName || ''}</p>
-                        <p>🌡️ <b>氣溫：</b>${(temp > -50 && !isNaN(temp)) ? temp + ' °C' : '無資料'}</p>
-                        <p>🌧️ <b>雨量：</b>${(rain >= 0 && !isNaN(rain)) ? rain + ' mm' : '無資料'}</p>
-                        <p>💨 <b>風向風速：</b>${getWindDirectionText(windDir)} (${isNaN(windSpeed) ? 0 : windSpeed} m/s)</p>
+                        <p>🌡️ <b>氣溫：</b>${(!isNaN(data.temp) && data.temp > -50) ? data.temp + ' °C' : '無資料'}</p>
+                        <p>🌧️ <b>雨量：</b>${data.rain >= 0 ? data.rain + ' mm' : '無資料'}</p>
+                        <p>💨 <b>風向風速：</b>${getWindDirectionText(data.windDir)} (${data.windSpeed} m/s)</p>
                     </div>
                  `)
                  .addTo(currentMarkersLayer);
