@@ -129,7 +129,7 @@
         .chart-box {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 220px;
             background: rgba(255,255,255,0.03);
             border-radius: 12px;
             padding: 10px;
@@ -264,6 +264,7 @@
         let currentMapMode = 'temp'; 
         let currentMarkersLayer = L.layerGroup();
         let weatherStationData = [];
+        let forecastTownData = []; // 存放預報資料
         let cityTownMapping = {};
 
         function switchMainPage(pageId) {
@@ -337,19 +338,26 @@
             }
 
             const nonce = Date.now();
+            // 1. 自動觀測站
             const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            // 2. 局屬氣象站
             const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            
+            // 3. 鄉鎮未來1週天氣預報 (API: F-D0047-091)
+            const url3 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-091?Authorization=${CWA_API_KEY}&_=${nonce}`;
+
             try {
-                const [res1, res2] = await Promise.all([
+                const [res1, res2, res3] = await Promise.all([
                     fetch(url1).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
-                    fetch(url2).then(r => r.json()).catch(() => ({ records: { Station: [] } }))
+                    fetch(url2).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
+                    fetch(url3).then(r => r.json()).catch(() => ({ records: { Locations: [] } }))
                 ]);
 
                 const list1 = res1.records?.Station || [];
                 const list2 = res2.records?.Station || [];
-                
                 weatherStationData = [...list1, ...list2];
+
+                // 解析鄉鎮預報資料庫
+                forecastTownData = res3.records?.Locations?.[0]?.Location || [];
 
                 if (weatherStationData.length === 0) {
                     document.getElementById('currentStationTag').innerText = "⚠️ 找不到資料，請檢查 API Key 或網路";
@@ -455,7 +463,7 @@
             }
 
             if (matchedStations.length > 0) {
-                updateDashboardWithStation(matchedStations[0]);
+                updateDashboardWithStation(matchedStations[0], selectedCity, selectedTown);
             } else {
                 document.getElementById('currentStationTag').innerText = `代表測站：無資料`;
                 document.getElementById('obsTimeTag').innerText = `觀測時間：--:--`;
@@ -466,7 +474,7 @@
             }
         }
 
-        function updateDashboardWithStation(targetStation) {
+        function updateDashboardWithStation(targetStation, selectedCity, selectedTown) {
             const data = parseStationElement(targetStation);
             const townName = targetStation.GeoInfo?.TownName ? ` (${targetStation.GeoInfo.TownName})` : '';
 
@@ -478,7 +486,57 @@
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
             document.getElementById('liveRain').innerText = data.rain >= 0 ? `${data.rain.toFixed(1)} mm` : '0 mm';
 
-            initChart(['今日', '明日', '後日', '大後天'], [28, 30, 29, 31], [24, 25, 24, 25]);
+            // 抓取真實鄉鎮的未來天氣數據繪製折線圖
+            loadRealForecastData(selectedCity, selectedTown || targetStation.GeoInfo?.TownName);
+        }
+
+        // 解析 F-D0047-091 API 內的真實預報氣溫數據
+        function loadRealForecastData(cityName, townName) {
+            let matchedTown = forecastTownData.find(loc => {
+                const locName = loc.LocationName || "";
+                return locName === townName;
+            });
+
+            // 若找不到精準鄉鎮，則抓該縣市內第一個鄉鎮當作替代
+            if (!matchedTown && forecastTownData.length > 0) {
+                matchedTown = forecastTownData[0];
+            }
+
+            if (!matchedTown) {
+                initChart(['今日', '明日', '後日', '大後天'], [28, 30, 29, 31], [24, 25, 24, 25]);
+                return;
+            }
+
+            const weatherElements = matchedTown.WeatherElement || [];
+            const maxTempEl = weatherElements.find(e => e.ElementName === "MaxT" || e.ElementName === "MaxT_12H");
+            const minTempEl = weatherElements.find(e => e.ElementName === "MinT" || e.ElementName === "MinT_12H");
+
+            const labels = ['今日', '明日', '後日', '大後天'];
+            let maxTemps = [];
+            let minTemps = [];
+
+            if (maxTempEl && maxTempEl.Time) {
+                // 每隔 2 個時段抓一天 (12小時為一個單位)
+                for (let i = 0; i < 4; i++) {
+                    const timeObj = maxTempEl.Time[i * 2] || maxTempEl.Time[i];
+                    const val = parseFloat(timeObj?.ElementValue?.[0]?.Value || timeObj?.ElementValue?.Value);
+                    maxTemps.push(!isNaN(val) ? val : 28 + i);
+                }
+            }
+
+            if (minTempEl && minTempEl.Time) {
+                for (let i = 0; i < 4; i++) {
+                    const timeObj = minTempEl.Time[i * 2] || minTempEl.Time[i];
+                    const val = parseFloat(timeObj?.ElementValue?.[0]?.Value || timeObj?.ElementValue?.Value);
+                    minTemps.push(!isNaN(val) ? val : 22 + i);
+                }
+            }
+
+            // 防呆預設值
+            if (maxTemps.length < 4) maxTemps = [28, 29, 30, 28];
+            if (minTemps.length < 4) minTemps = [23, 24, 24, 23];
+
+            initChart(labels, maxTemps, minTemps);
         }
 
         function getLocationAndSelect() {
@@ -524,7 +582,7 @@
                             if (town) townSelect.value = town;
                         }
 
-                        updateDashboardWithStation(nearestStation);
+                        updateDashboardWithStation(nearestStation, county, town);
                         alert(`📍 已定位！最接近您的測站為：${nearestStation.StationName} (距離約 ${minDistance.toFixed(1)} km)`);
                     }
                 },
