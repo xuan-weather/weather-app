@@ -99,6 +99,7 @@
             color: #fca5a5;
             font-size: 13px;
             line-height: 1.4;
+            white-space: pre-line;
         }
         .no-warning-box {
             background: rgba(16, 185, 129, 0.1);
@@ -313,7 +314,7 @@
         let currentMarkersLayer = L.layerGroup();
         let weatherStationData = [];
         let forecastTownData = [];
-        let warningData = []; // 警特報資料
+        let warningData = [];
         let cityTownMapping = {};
 
         function switchMainPage(pageId) {
@@ -386,22 +387,19 @@
                 return;
             }
 
+            // 雙重防快取機制：nonce 參數 + no-store 設定
             const nonce = Date.now();
-            // 1. 自動觀測站
             const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            // 2. 局屬氣象站
             const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            // 3. 鄉鎮預報 (API: F-D0047-091)
             const url3 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-091?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            // 4. 天氣警特報 (API: W-C0033-001)
             const url4 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const [res1, res2, res3, res4] = await Promise.all([
-                    fetch(url1).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
-                    fetch(url2).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
-                    fetch(url3).then(r => r.json()).catch(() => ({ records: { Locations: [] } })),
-                    fetch(url4).then(r => r.json()).catch(() => ({ records: { location: [] } }))
+                    fetch(url1, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
+                    fetch(url2, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
+                    fetch(url3, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Locations: [] } })),
+                    fetch(url4, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { location: [] } }))
                 ]);
 
                 const list1 = res1.records?.Station || [];
@@ -446,6 +444,7 @@
 
         function initSelectOptions() {
             const citySelect = document.getElementById('citySelect');
+            const currentSelectedCity = citySelect.value;
             citySelect.innerHTML = '';
 
             const cities = Object.keys(cityTownMapping).sort();
@@ -456,7 +455,9 @@
                 citySelect.appendChild(opt);
             });
 
-            if (cities.includes('臺南市')) {
+            if (currentSelectedCity && cities.includes(currentSelectedCity)) {
+                citySelect.value = currentSelectedCity;
+            } else if (cities.includes('臺南市')) {
                 citySelect.value = '臺南市';
             } else if (cities.length > 0) {
                 citySelect.value = cities[0];
@@ -468,6 +469,7 @@
         function updateTownOptions() {
             const selectedCity = document.getElementById('citySelect').value;
             const townSelect = document.getElementById('townSelect');
+            const currentSelectedTown = townSelect.value;
             townSelect.innerHTML = '';
 
             const towns = Array.from(cityTownMapping[selectedCity] || []).sort();
@@ -486,6 +488,10 @@
                 });
             }
 
+            if (currentSelectedTown && towns.includes(currentSelectedTown)) {
+                townSelect.value = currentSelectedTown;
+            }
+
             renderCurrentStationData();
         }
 
@@ -497,7 +503,6 @@
             renderCurrentStationData();
         }
 
-        // 解析警特報資料
         function checkCityWarnings(cityName) {
             const alertBox = document.getElementById('warningAlertBox');
             const noAlertBox = document.getElementById('noWarningBox');
@@ -537,7 +542,6 @@
             const selectedCity = document.getElementById('citySelect').value;
             const selectedTown = document.getElementById('townSelect').value;
 
-            // 檢查該縣市警特報
             checkCityWarnings(selectedCity);
 
             let matchedStations = weatherStationData.filter(s => {
