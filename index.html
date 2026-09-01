@@ -98,6 +98,13 @@
         .info-card-item span { font-size: 12px; color: #9e9e9e; }
         .info-card-item b { font-size: 16px; color: #38bdf8; }
 
+        .station-tag {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+
         /* 圖表容器 */
         .chart-box {
             position: relative;
@@ -204,6 +211,8 @@
                 </select>
             </div>
 
+            <div class="station-tag" id="currentStationTag">代表測站：資料載入中...</div>
+
             <!-- 選擇縣市後的即時觀測數據區 -->
             <div class="realtime-info-box">
                 <div class="info-card-item">
@@ -249,8 +258,34 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ⚠️ 請修改為你在中央氣象署申請的 API Key
+        // ⚠️ 請替換為你在中央氣象署開放資料平臺申請到的授權碼 API Key
         const CWA_API_KEY = "CWA-8BC01589-C3CD-4A80-9A3B-1AFA46E9F246";
+
+        // 22 縣市對應氣象署官方權威代表測站名稱或 ID
+        const CITY_PRIMARY_STATIONS = {
+            "基隆市": ["基隆"],
+            "臺北市": ["臺北", "松山"],
+            "新北市": ["板橋", "淡水"],
+            "桃園市": ["新屋", "桃園"],
+            "新竹市": ["新竹"],
+            "新竹縣": ["竹北", "竹東"],
+            "宜蘭縣": ["宜蘭", "羅東"],
+            "苗栗縣": ["苗栗", "造橋"],
+            "臺中市": ["臺中"],
+            "彰化縣": ["彰化", "員林"],
+            "南投縣": ["日月潭", "南投"],
+            "雲林縣": ["雲林", "斗六"],
+            "嘉義市": ["嘉義"],
+            "嘉義縣": ["太保", "阿里山"],
+            "臺南市": ["臺南", "永康"],
+            "高雄市": ["高雄"],
+            "屏東縣": ["恆春", "屏東"],
+            "花蓮縣": ["花蓮", "光復"],
+            "臺東縣": ["臺東", "成功"],
+            "澎湖縣": ["澎湖", "西嶼"],
+            "金門縣": ["金門"],
+            "連江縣": ["馬祖", "東引"]
+        };
 
         let tempChart;
         let map;
@@ -270,8 +305,8 @@
             }
         }
 
-        // 風向轉換
         function getWindDirectionText(degree) {
+            if (isNaN(degree) || degree < 0) return '靜風';
             if (degree > 337.5 || degree <= 22.5) return '北風';
             if (degree > 22.5 && degree <= 67.5) return '東北風';
             if (degree > 67.5 && degree <= 112.5) return '東風';
@@ -283,42 +318,86 @@
             return '靜風';
         }
 
-        // 載入全台自動氣象站資料 (O-A0001-001)
+        // 同時抓取局屬氣象站 (O-A0003-001) 與 自動氣象站 (O-A0001-001) 確保 22 縣市無遺漏
         async function fetchAllStationData() {
-            const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}`;
+            const timeStamp = Date.now();
+            const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_t=${timeStamp}`;
+            const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_t=${timeStamp}`;
+            
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                weatherStationData = data.records.Station;
-                loadCityData(); // 成功取得後更新頁面
+                const [res1, res2] = await Promise.all([
+                    fetch(url1, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
+                    fetch(url2, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } }))
+                ]);
+
+                const list1 = res1.records?.Station || [];
+                const list2 = res2.records?.Station || [];
+                
+                // 合併兩個資料集
+                weatherStationData = [...list1, ...list2];
+
+                loadCityData(); 
                 if (mapInitialized) renderMapMarkers();
             } catch (err) {
                 console.error("無法取得氣象署資料:", err);
             }
         }
 
-        // 根據選定縣市抓取即時觀測數據
+        // 準確解析與對應縣市主測站
         function loadCityData() {
             const selectedCity = document.getElementById('citySelect').value;
-            // 搜尋該縣市的第一個有效氣象站
-            const station = weatherStationData.find(s => s.GeoInfo.CountyName === selectedCity || s.GeoInfo.CountyName === selectedCity.replace('臺', '台'));
+            const primaryTargets = CITY_PRIMARY_STATIONS[selectedCity] || [];
 
-            if (station) {
-                const temp = parseFloat(station.WeatherElement.AirTemperature);
-                const rain = parseFloat(station.WeatherElement.Now.Precipitation);
-                const windSpeed = parseFloat(station.WeatherElement.WindSpeed);
-                const windDir = parseFloat(station.WeatherElement.WindDirection);
-                const humidity = station.WeatherElement.RelativeHumidity;
+            // 1. 篩選出屬於該縣市的所有測站
+            const cityStations = weatherStationData.filter(s => {
+                const county = s.GeoInfo?.CountyName || "";
+                return county === selectedCity || county === selectedCity.replace('臺', '台');
+            });
 
-                document.getElementById('liveTemp').innerText = temp > -50 ? `${temp} °C` : '-- °C';
-                document.getElementById('liveWind').innerText = `${getWindDirectionText(windDir)} ${windSpeed} m/s`;
-                document.getElementById('liveHumidity').innerText = `${humidity} %`;
-                document.getElementById('liveRain').innerText = rain >= 0 ? `${rain} mm` : '0 mm';
-            } else {
-                document.getElementById('liveTemp').innerText = '載入中...';
+            let targetStation = null;
+
+            // 2. 優先配對官方主要代表測站
+            for (let nameKey of primaryTargets) {
+                targetStation = cityStations.find(s => s.StationName === nameKey || s.StationName === nameKey + "氣象站");
+                if (targetStation) break;
             }
 
-            // 更新預測趨勢圖
+            // 3. 若無精準匹配，找含有縣市名稱的測站
+            if (!targetStation) {
+                targetStation = cityStations.find(s => s.StationName.includes(selectedCity.replace('市','').replace('縣','')));
+            }
+
+            // 4. 退而求其次，取該縣市有有效溫度的第一個測站
+            if (!targetStation && cityStations.length > 0) {
+                targetStation = cityStations.find(s => parseFloat(s.WeatherElement?.AirTemperature) > -50) || cityStations[0];
+            }
+
+            if (targetStation) {
+                document.getElementById('currentStationTag').innerText = `代表測站：${targetStation.StationName} (${targetStation.GeoInfo?.CountyName || ''}${targetStation.GeoInfo?.TownName || ''})`;
+
+                const temp = parseFloat(targetStation.WeatherElement?.AirTemperature);
+                
+                // 取得雨量 (相容 RainElement / DailyAccumulation / Now.Precipitation)
+                let rain = parseFloat(targetStation.WeatherElement?.Now?.Precipitation);
+                if (isNaN(rain)) rain = parseFloat(targetStation.WeatherElement?.DailyAccumulation);
+                if (isNaN(rain)) rain = 0;
+
+                const windSpeed = parseFloat(targetStation.WeatherElement?.WindSpeed) || 0;
+                const windDir = parseFloat(targetStation.WeatherElement?.WindDirection) || 0;
+                const humidity = targetStation.WeatherElement?.RelativeHumidity || '--';
+
+                document.getElementById('liveTemp').innerText = (temp > -50 && !isNaN(temp)) ? `${temp.toFixed(1)} °C` : '-- °C';
+                document.getElementById('liveWind').innerText = `${getWindDirectionText(windDir)} ${windSpeed.toFixed(1)} m/s`;
+                document.getElementById('liveHumidity').innerText = humidity !== '--' ? `${humidity} %` : '-- %';
+                document.getElementById('liveRain').innerText = rain >= 0 ? `${rain.toFixed(1)} mm` : '0 mm';
+            } else {
+                document.getElementById('currentStationTag').innerText = `代表測站：無可用測站資料`;
+                document.getElementById('liveTemp').innerText = '無資料';
+                document.getElementById('liveWind').innerText = '--';
+                document.getElementById('liveHumidity').innerText = '-- %';
+                document.getElementById('liveRain').innerText = '-- mm';
+            }
+
             initChart(['今日', '明日', '後日', '大後天'], [28, 30, 29, 31], [24, 25, 24, 25]);
         }
 
@@ -370,22 +449,26 @@
         function renderMapMarkers() {
             currentMarkersLayer.clearLayers();
             weatherStationData.forEach(station => {
-                const lat = parseFloat(station.GeoInfo.Coordinates.find(c => c.CoordinateName === "WGS84").StationLatitude);
-                const lng = parseFloat(station.GeoInfo.Coordinates.find(c => c.CoordinateName === "WGS84").StationLongitude);
-                const temp = parseFloat(station.WeatherElement.AirTemperature);
-                const rain = parseFloat(station.WeatherElement.Now.Precipitation);
-                const windSpeed = parseFloat(station.WeatherElement.WindSpeed);
-                const windDir = parseFloat(station.WeatherElement.WindDirection);
+                const coords = station.GeoInfo?.Coordinates?.find(c => c.CoordinateName === "WGS84") || {};
+                const lat = parseFloat(coords.StationLatitude);
+                const lng = parseFloat(coords.StationLongitude);
+                const temp = parseFloat(station.WeatherElement?.AirTemperature);
+                
+                let rain = parseFloat(station.WeatherElement?.Now?.Precipitation);
+                if (isNaN(rain)) rain = parseFloat(station.WeatherElement?.DailyAccumulation);
+
+                const windSpeed = parseFloat(station.WeatherElement?.WindSpeed);
+                const windDir = parseFloat(station.WeatherElement?.WindDirection);
 
                 if (isNaN(lat) || isNaN(lng)) return;
 
                 let valText = '--'; let bgColor = '#6b7280';
                 if (currentMapMode === 'temp') {
-                    if (temp > -50) { valText = `${Math.round(temp)}°`; bgColor = getMapTempColor(temp); }
+                    if (temp > -50 && !isNaN(temp)) { valText = `${Math.round(temp)}°`; bgColor = getMapTempColor(temp); }
                 } else if (currentMapMode === 'rain') {
-                    if (rain >= 0) { valText = rain === 0 ? '0' : rain.toFixed(1); bgColor = getMapRainColor(rain); }
+                    if (rain >= 0 && !isNaN(rain)) { valText = rain === 0 ? '0' : rain.toFixed(1); bgColor = getMapRainColor(rain); }
                 } else if (currentMapMode === 'wind') {
-                    if (windSpeed >= 0) { valText = `${windSpeed.toFixed(1)}`; bgColor = getMapWindColor(windSpeed); }
+                    if (windSpeed >= 0 && !isNaN(windSpeed)) { valText = `${windSpeed.toFixed(1)}`; bgColor = getMapWindColor(windSpeed); }
                 }
 
                 const customIcon = L.divIcon({
@@ -398,10 +481,10 @@
                  .bindPopup(`
                     <div class="popup-card">
                         <h4>${station.StationName}</h4>
-                        <p>📍 <b>區域：</b>${station.GeoInfo.CountyName} ${station.GeoInfo.TownName}</p>
-                        <p>🌡️ <b>氣溫：</b>${temp > -50 ? temp + ' °C' : '無資料'}</p>
-                        <p>🌧️ <b>雨量：</b>${rain >= 0 ? rain + ' mm' : '無資料'}</p>
-                        <p>💨 <b>風向風速：</b>${getWindDirectionText(windDir)} (${windSpeed} m/s)</p>
+                        <p>📍 <b>區域：</b>${station.GeoInfo?.CountyName || ''} ${station.GeoInfo?.TownName || ''}</p>
+                        <p>🌡️ <b>氣溫：</b>${(temp > -50 && !isNaN(temp)) ? temp + ' °C' : '無資料'}</p>
+                        <p>🌧️ <b>雨量：</b>${(rain >= 0 && !isNaN(rain)) ? rain + ' mm' : '無資料'}</p>
+                        <p>💨 <b>風向風速：</b>${getWindDirectionText(windDir)} (${isNaN(windSpeed) ? 0 : windSpeed} m/s)</p>
                     </div>
                  `)
                  .addTo(currentMarkersLayer);
