@@ -354,6 +354,13 @@
 
         function parseStationElement(station) {
             const we = station.WeatherElement || {};
+            
+            // 精準抓取 10 分鐘自動站的 ObsTime
+            let rawObsTime = station.ObsTime?.DateTime || station.ObsTime || '--';
+            if (typeof rawObsTime === 'object') {
+                rawObsTime = rawObsTime.DateTime || '--';
+            }
+
             let temp = parseFloat(we.AirTemperature ?? we.TEMP);
             let rain = parseFloat(we.Now?.Precipitation ?? we.DailyAccumulation ?? we.NOW?.Precipitation);
             if (isNaN(rain)) rain = 0;
@@ -361,9 +368,8 @@
             let windSpeed = parseFloat(we.WindSpeed ?? we.WDSD) || 0;
             let windDir = parseFloat(we.WindDirection ?? we.WDIR) || 0;
             let humidity = we.RelativeHumidity ?? we.HUMD ?? '--';
-            let obsTime = station.ObsTime?.DateTime || station.ObsTime || '--';
 
-            return { temp, rain, windSpeed, windDir, humidity, obsTime };
+            return { temp, rain, windSpeed, windDir, humidity, obsTime: rawObsTime };
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -387,7 +393,7 @@
                 return;
             }
 
-            // 雙重防快取機制：nonce 參數 + no-store 設定
+            // 防快取機制：nonce 參數 + cache: 'no-store'
             const nonce = Date.now();
             const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
             const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
@@ -558,6 +564,13 @@
             }
 
             if (matchedStations.length > 0) {
+                // 自動排序：優先選取觀測時間最新的測站 (10 分鐘自動站)
+                matchedStations.sort((a, b) => {
+                    const timeA = new Date(a.ObsTime?.DateTime || a.ObsTime || 0).getTime();
+                    const timeB = new Date(b.ObsTime?.DateTime || b.ObsTime || 0).getTime();
+                    return timeB - timeA;
+                });
+
                 updateDashboardWithStation(matchedStations[0], selectedCity, selectedTown);
             } else {
                 document.getElementById('currentStationTag').innerText = `代表測站：無資料`;
@@ -770,6 +783,11 @@
 
         window.onload = function() {
             fetchAllStationData();
+            
+            // 每 5 分鐘背景自動刷最新氣象資料
+            setInterval(() => {
+                fetchAllStationData();
+            }, 5 * 60 * 1000);
         };
     </script>
 </body>
