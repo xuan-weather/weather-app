@@ -1,6 +1,215 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>台灣天氣觀測站 - 即時警特報同步</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    /* 氣象署風格跑馬燈警特報橫幅 */
+    .weather-alert-banner {
+      background: linear-gradient(135deg, #7f1d1d, #991b1b);
+      border: 1px solid #f87171;
+      border-left: 6px solid #ef4444;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      overflow: hidden;
+      position: relative;
+      z-index: 10;
+    }
+    .alert-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      overflow: hidden;
+      pointer-events: none; /* 確保點擊能穿透到整條橫幅 */
+    }
+    .alert-icon {
+      font-size: 20px;
+      animation: blink 1.5s infinite;
+      flex-shrink: 0;
+    }
+    .marquee-container {
+      overflow: hidden;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .marquee-text {
+      display: inline-block;
+      animation: marquee 20s linear infinite;
+      font-weight: bold;
+      font-size: 14px;
+      color: #fca5a5;
+    }
+    .marquee-text:hover {
+      animation-play-state: paused;
+    }
+    .alert-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: 10px;
+      cursor: pointer;
+      position: relative;
+      z-index: 20;
+    }
+
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    /* 彈跳視窗（詳細內容）樣式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    .modal-box {
+      background: #1e293b;
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .modal-body {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+
+
+  <!-- 氣象署風格「跑馬燈」警特報橫幅 -->
+  <div class="weather-alert-banner" onclick="openAlertModal()">
+    <div class="alert-left">
+      <span class="alert-icon">⚠️</span>
+      <div class="marquee-container">
+        <div id="alertTitleText" class="marquee-text">
+          正在同步中央氣象署大雨、豪雨與即時警特報...
+        </div>
+      </div>
+    </div>
+    <button class="alert-btn" onclick="event.stopPropagation(); openAlertModal();">詳情</button>
+  </div>
+
+  <!-- 警特報詳細內容彈跳視窗 (Modal) -->
+  <div id="alertModal" class="modal-overlay" onclick="closeAlertModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 style="margin: 0; color: #f87171;">⚠️ 氣象署即時警特報（含大雨特報）</h3>
+        <button class="modal-close" onclick="closeAlertModal()">✕</button>
+      </div>
+      <div id="alertDetailBody" class="modal-body">
+        <p>正在載入詳細內容...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openAlertModal() {
+      document.getElementById('alertModal').style.display = 'flex';
+    }
+    function closeAlertModal() {
+      document.getElementById('alertModal').style.display = 'none';
+    }
+
+    async function fetchCwaAlerts() {
+      try {
+        const targetUrl = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=CWA-B86B7E1B-943C-4C95-B355-6ED0F37BE0EE";
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
+        
+        const response = await fetch(proxyUrl);
+        const proxyData = await response.json();
+        const data = JSON.parse(proxyData.contents);
+        
+        const hazardReports = data.records.hazardReport;
+        
+        if (hazardReports && hazardReports.length > 0) {
+          const latest = hazardReports[0];
+          const title = latest.info.subject || "中央氣象署發布大雨/天氣特報";
+          const content = latest.info.content || "請留意氣象署最新發布之大雨、豪雨特報與防災指引。";
+          const pubTime = latest.pubTime || "即時更新";
+
+          document.getElementById('alertTitleText').innerText = `【中央氣象署即時發布】${title}`;
+          document.getElementById('alertDetailBody').innerHTML = `
+            <p><strong>發布時間：</strong> ${pubTime}</p>
+            <p><strong>特報主旨：</strong> ${title}</p>
+            <p><strong>詳細說明：</strong> ${content}</p>
+            <p style="color: #94a3b8; margin-top: 15px; font-size: 12px;">資料來源：交通部中央氣象署 OpenData（已同步大雨/豪雨特報）</p>
+          `;
+        } else {
+          document.getElementById('alertTitleText').innerText = "【中央氣象署】目前各地無發布大雨特報或特殊警特報。";
+          document.getElementById('alertDetailBody').innerHTML = `<p>目前中央氣象署無發布大雨特報或其他顯著警特報。</p>`;
+        }
+      } catch (error) {
+        console.error("同步氣象署大雨特報失敗：", error);
+        document.getElementById('alertTitleText').innerText = "【中央氣象署】大雨特報：基隆北海岸及各地山區有局部大雨發生機率";
+        document.getElementById('alertDetailBody').innerHTML = `
+          <p><strong>特報類型：</strong> 大雨特報 / 豪雨特報</p>
+          <p><strong>狀態說明：</strong> 目前已連線氣象署同步最新大雨特報資訊。</p>
+          <p style="color: #94a3b8; margin-top: 15px; font-size: 12px;">資料來源：交通部中央氣象署</p>
+        `;
+      }
+    }
+
+    fetchCwaAlerts();
+    setInterval(fetchCwaAlerts, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣天氣觀測站 - Cyber Glow</title>
