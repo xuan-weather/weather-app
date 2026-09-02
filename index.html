@@ -385,7 +385,7 @@
 
         async function fetchAllStationData(isManualRefresh = false) {
             const btn = document.getElementById('refreshBtn');
-            if (btn) btn.classList.add('spinning');
+            if (btn && isManualRefresh) btn.classList.add('spinning');
 
             if (!CWA_API_KEY) {
                 document.getElementById('currentStationTag').innerText = "❌ 請填寫有效的 API Key";
@@ -782,12 +782,14 @@
         }
 
         window.onload = function() {
+            // 頁面載入時立刻抓取一次
             fetchAllStationData();
             
-            // 每 5 分鐘背景自動刷最新氣象資料
+            // 每 60 秒（1 分鐘）背景自動輪詢一次
+            // 只要氣象署每 10 分鐘（00分、10分、20分...）一上架新數據，網頁最快會在 1 分鐘內即時無縫更新！
             setInterval(() => {
                 fetchAllStationData();
-            }, 5 * 60 * 1000);
+            }, 60 * 1000);
         };
     </script>
 </body>
