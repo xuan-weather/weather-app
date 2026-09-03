@@ -10,6 +10,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        html {
+          height: 100%;
+          background: 50% 50% no-repeat
+            url('data:image/svg+xml,<svg viewBox="-20 -5 60 40" width="140" xmlns="http://www.w3.org/2000/svg" opacity="0.2"><path d="M1 8l11-7 11 7v8l-11 7-11-7zm0 0l11 8 11-8m0 8L12 8 1 16M12 1v7m0 8v7" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"/><text x="-12" y="32" font-size="5" font-family="monospace" fill="currentColor">Built on CodePen</text></svg>');
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -250,7 +256,7 @@
             gap: 6px;
         }
         .info-card-item span { font-size: 12px; color: #94a3b8; }
-        .info-card-item b { font-size: 18px; color: #38bdf8; font-weight: 700; }
+        .info-card-item b { font-size: 15px; color: #38bdf8; font-weight: 700; }
 
         .chart-card {
             background: linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
@@ -312,12 +318,10 @@
             height: 100%;
         }
 
-        /* 隱藏 Leaflet 版權宣告 */
         .leaflet-control-attribution {
             display: none !important;
         }
 
-        /* 氣象署風格：直立式專業圖例卡片 */
         .leaflet-bottom.leaflet-left {
             z-index: 1000;
         }
@@ -331,7 +335,7 @@
             font-size: 11px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.6);
             margin: 10px;
-            min-width: 85px;
+            min-width: 120px;
         }
         .legend-header-title {
             font-weight: 700;
@@ -348,7 +352,6 @@
             gap: 6px;
             justify-content: center;
         }
-        /* 漸層條樣式 */
         .legend-color-bar-rain {
             width: 12px;
             border-radius: 3px;
@@ -378,7 +381,6 @@
             line-height: 1;
         }
 
-        /* 圓點樣式（雨量、氣溫與風速共用） */
         .weather-dot-badge {
             width: 16px;
             height: 16px;
@@ -521,7 +523,7 @@
                     <b id="liveTemp">-- °C</b>
                 </div>
                 <div class="info-card-item">
-                    <span>💨 風向風速</span>
+                    <span>💨 風向與風力</span>
                     <b id="liveWind">--</b>
                 </div>
                 <div class="info-card-item">
@@ -555,6 +557,7 @@
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
+                    <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
                 </div>
             </div>
             
@@ -685,6 +688,28 @@
             return '靜風';
         }
 
+        function getWindLevel(ms) {
+            if (isNaN(ms) || ms < 0) return '0級';
+            if (ms < 0.3) return '0級';
+            if (ms < 1.6) return '1級';
+            if (ms < 3.4) return '2級';
+            if (ms < 5.5) return '3級';
+            if (ms < 8.0) return '4級';
+            if (ms < 10.8) return '5級';
+            if (ms < 13.9) return '6級';
+            if (ms < 17.2) return '7級';
+            if (ms < 20.8) return '8級';
+            if (ms < 24.5) return '9級';
+            if (ms < 28.5) return '10級';
+            if (ms < 32.7) return '11級';
+            if (ms < 37.0) return '12級';
+            if (ms < 41.5) return '13級';
+            if (ms < 46.2) return '14級';
+            if (ms < 51.0) return '15級';
+            if (ms < 56.1) return '16級';
+            return '17級以上';
+        }
+
         function formatObsTime(dateTimeStr) {
             if (!dateTimeStr) return '--:--';
             const date = new Date(dateTimeStr);
@@ -712,6 +737,9 @@
             let windSpeed = parseFloat(we.WindSpeed ?? we.WDSD);
             if (isNaN(windSpeed) || windSpeed < 0) windSpeed = 0;
 
+            let windGust = parseFloat(we.GustInfo?.PeakGustSpeed ?? we.GUST ?? we.WindGust ?? we.GustSpeed);
+            if (isNaN(windGust) || windGust < 0) windGust = windSpeed;
+
             let windDir = parseFloat(we.WindDirection ?? we.WDIR);
             if (isNaN(windDir) || windDir < 0) windDir = -1;
 
@@ -723,7 +751,7 @@
                 humidity = Math.round(humidity);
             }
 
-            return { temp, rain, windSpeed, windDir, humidity, obsTime: rawObsTime };
+            return { temp, rain, windSpeed, windGust, windDir, humidity, obsTime: rawObsTime };
         }
 
         function isFreewayStation(stationName) {
@@ -1034,7 +1062,7 @@
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
-                                <div>💨 風向風速：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s</b></div>
+                                <div>💨 風速/陣風：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
                                 <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
                             </div>
                         `;
@@ -1201,7 +1229,7 @@
             document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(data.obsTime)}`;
 
             document.getElementById('liveTemp').innerText = !isNaN(data.temp) ? `${data.temp.toFixed(1)} °C` : '-- °C';
-            document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s`;
+            document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})`;
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
             document.getElementById('liveRain').innerText = data.rain >= 0 ? `${data.rain.toFixed(1)} mm` : '0 mm';
 
@@ -1324,8 +1352,9 @@
 
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'rain', 'wind'].forEach(m => {
-                document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`).classList.toggle('active', m === mode);
+            ['temp', 'rain', 'wind', 'windGust'].forEach(m => {
+                const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
+                if (btn) btn.classList.toggle('active', m === mode);
             });
             updateMapLegendUI(mode);
             if (mapInitialized) renderMapMarkers();
@@ -1378,19 +1407,27 @@
                         </div>
                     </div>
                 `;
-            } else if (mode === 'wind') {
+            } else if (mode === 'wind' || mode === 'windGust') {
+                const titleText = mode === 'wind' ? '風速 (級數)' : '陣風 (級數)';
                 legendBox.innerHTML = `
-                    <div class="legend-header-title">風速 (m/s)</div>
+                    <div class="legend-header-title">${titleText}</div>
                     <div class="legend-scale-body">
-                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 160px;"></div>
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #71717a, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7, #ec4899); min-height: 200px;"></div>
                         <div class="legend-labels-list">
-                            <span>20+</span>
-                            <span>16</span>
-                            <span>12</span>
-                            <span>8</span>
-                            <span>4</span>
-                            <span>2</span>
-                            <span>0</span>
+                            <span>42+ (14級+)</span>
+                            <span>37 (13級)</span>
+                            <span>33 (12級)</span>
+                            <span>29 (11級)</span>
+                            <span>25 (10級)</span>
+                            <span>21 (9級)</span>
+                            <span>17 (8級)</span>
+                            <span>14 (7級)</span>
+                            <span>11 (6級)</span>
+                            <span>8 (5級)</span>
+                            <span>6 (4級)</span>
+                            <span>3 (3級)</span>
+                            <span>2 (2級)</span>
+                            <span>0 (0-1級)</span>
                         </div>
                     </div>
                 `;
@@ -1429,12 +1466,13 @@
         }
 
         function getWindColor(speed) {
-            if (speed >= 20) return '#a855f7';
-            if (speed >= 16) return '#ef4444';
-            if (speed >= 12) return '#f97316';
-            if (speed >= 8) return '#facc15';
-            if (speed >= 4) return '#10b981';
-            if (speed >= 2) return '#3b82f6';
+            if (speed >= 41.5) return '#ec4899';
+            if (speed >= 32.7) return '#a855f7';
+            if (speed >= 24.5) return '#ef4444';
+            if (speed >= 17.2) return '#f97316';
+            if (speed >= 10.8) return '#facc15';
+            if (speed >= 5.5) return '#10b981';
+            if (speed >= 1.6) return '#3b82f6';
             return '#71717a';
         }
 
@@ -1450,8 +1488,7 @@
                 const data = parseStationElement(station);
                 let customIcon;
 
-                // 氣溫、雨量與風速模式全面採用圓點表示
-                if (currentMapMode === 'rain' || currentMapMode === 'temp' || currentMapMode === 'wind') {
+                if (currentMapMode === 'rain' || currentMapMode === 'temp' || currentMapMode === 'wind' || currentMapMode === 'windGust') {
                     let val, bgColor, labelName, unit;
                     if (currentMapMode === 'rain') {
                         val = data.rain;
@@ -1463,10 +1500,15 @@
                         bgColor = getTempColor(val);
                         labelName = '氣溫';
                         unit = '°C';
-                    } else {
+                    } else if (currentMapMode === 'wind') {
                         val = data.windSpeed;
                         bgColor = getWindColor(val);
                         labelName = '風速';
+                        unit = 'm/s';
+                    } else {
+                        val = data.windGust;
+                        bgColor = getWindColor(val);
+                        labelName = '陣風';
                         unit = 'm/s';
                     }
 
@@ -1486,7 +1528,8 @@
                         <h4>${station.StationName}</h4>
                         <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp + ' °C' : '--'}</p>
                         <p><b>濕度：</b> ${data.humidity} %</p>
-                        <p><b>風速：</b> ${data.windSpeed} m/s</p>
+                        <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
+                        <p><b>陣風風速：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
                         <p><b>雨量：</b> ${data.rain} mm</p>
                     </div>
                 `);
