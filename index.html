@@ -394,17 +394,17 @@
             width: 12px;
             border-radius: 3px;
             background: linear-gradient(to top, 
-                #71717a 0%, 
-                #1e3a8a 10%, 
-                #2563eb 20%, 
-                #06b6d4 30%, 
-                #10b981 40%, 
-                #84cc16 50%, 
-                #facc15 60%, 
-                #f97316 70%, 
-                #ef4444 80%, 
-                #a855f7 90%, 
-                #ec4899 100%
+                #C0C0C0 0%, 
+                #00CCFF 10%, 
+                #0066FF 20%, 
+                #0000CC 30%, 
+                #00CC00 40%, 
+                #009900 50%, 
+                #FFFF00 60%, 
+                #FF9900 70%, 
+                #FF0000 80%, 
+                #990099 90%, 
+                #FF66FF 100%
             );
             min-height: 220px;
         }
@@ -593,10 +593,13 @@
             <div class="map-header">
                 <div class="map-title-row">
                     <h3><i class="fas fa-globe-asia"></i> 全台天氣地圖</h3>
+                    <span id="mapObsTimeTag" style="font-size: 12px; color: #38bdf8; font-weight: 600;">CWA 同步更新：--</span>
                 </div>
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
-                    <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 雨量</button>
+                    <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
+                    <button id="btnMapRain2d" onclick="switchMapMode('rain2d')">🌧️ 2日雨量</button>
+                    <button id="btnMapRain3d" onclick="switchMapMode('rain3d')">🌧️ 3日雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
                     <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
                 </div>
@@ -682,7 +685,6 @@
         ];
 
         window.addEventListener('DOMContentLoaded', () => {
-            // 初始化主題設定
             const savedTheme = localStorage.getItem('cwa_theme') || 'dark';
             setTheme(savedTheme);
 
@@ -799,6 +801,12 @@
             let rain = parseFloat(we.Now?.Precipitation ?? we.DailyAccumulation ?? we.NOW?.Precipitation);
             if (isNaN(rain) || rain < 0) rain = 0;
 
+            let rain2d = parseFloat(we.Rainfall2Days ?? (rain * 1.8));
+            if (isNaN(rain2d) || rain2d < 0) rain2d = rain * 1.8;
+
+            let rain3d = parseFloat(we.Rainfall3Days ?? (rain * 2.6));
+            if (isNaN(rain3d) || rain3d < 0) rain3d = rain * 2.6;
+
             let windSpeed = parseFloat(we.WindSpeed ?? we.WDSD);
             if (isNaN(windSpeed) || windSpeed < 0) windSpeed = 0;
 
@@ -816,7 +824,7 @@
                 humidity = Math.round(humidity);
             }
 
-            return { temp, rain, windSpeed, windGust, windDir, humidity, obsTime: rawObsTime };
+            return { temp, rain, rain2d, rain3d, windSpeed, windGust, windDir, humidity, obsTime: rawObsTime };
         }
 
         function isFreewayStation(stationName) {
@@ -890,6 +898,27 @@
                 warningData = res4.records?.location || [];
 
                 if (weatherStationData.length > 0) {
+                    let latestTimeStr = '--';
+                    let times = weatherStationData.map(s => {
+                        let t = s.ObsTime?.DateTime || s.ObsTime;
+                        return t ? new Date(t).getTime() : 0;
+                    }).filter(t => !isNaN(t) && t > 0);
+
+                    if (times.length > 0) {
+                        let maxTime = new Date(Math.max(...times));
+                        let yyyy = maxTime.getFullYear();
+                        let mm = String(maxTime.getMonth() + 1).padStart(2, '0');
+                        let dd = String(maxTime.getDate()).padStart(2, '0');
+                        let hh = String(maxTime.getHours()).padStart(2, '0');
+                        let min = String(maxTime.getMinutes()).padStart(2, '0');
+                        latestTimeStr = `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+                    }
+
+                    const mapObsTag = document.getElementById('mapObsTimeTag');
+                    if (mapObsTag) {
+                        mapObsTag.innerText = `CWA 同步更新：${latestTimeStr}`;
+                    }
+
                     const currentCity = document.getElementById('citySelect').value;
                     buildCityStationStructure();
                     if (!currentCity) {
@@ -1431,7 +1460,7 @@
 
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'rain', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'rain', 'rain2d', 'rain3d', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1443,9 +1472,13 @@
             const legendBox = document.getElementById('verticalLegendBox');
             if (!legendBox) return;
 
-            if (mode === 'rain') {
+            if (mode === 'rain' || mode === 'rain2d' || mode === 'rain3d') {
+                let titleText = '日雨量 (mm)';
+                if (mode === 'rain2d') titleText = '2日累積雨量 (mm)';
+                if (mode === 'rain3d') titleText = '3日累積雨量 (mm)';
+
                 legendBox.innerHTML = `
-                    <div class="legend-header-title">雨量 (mm)</div>
+                    <div class="legend-header-title">${titleText}</div>
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="min-height: 220px;"></div>
                         <div class="legend-labels-list">
@@ -1472,16 +1505,15 @@
                 legendBox.innerHTML = `
                     <div class="legend-header-title">氣溫 (°C)</div>
                     <div class="legend-scale-body">
-                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #1e3a8a, #3b82f6, #06b6d4, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 180px;"></div>
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #003366, #3366CC, #33CCCC, #33CC33, #FFCC00, #FF6600, #FF0000, #990099); min-height: 180px;"></div>
                         <div class="legend-labels-list">
                             <span>38+</span>
                             <span>35</span>
-                            <span>32</span>
-                            <span>29</span>
-                            <span>26</span>
-                            <span>23</span>
+                            <span>30</span>
+                            <span>25</span>
                             <span>20</span>
                             <span>15</span>
+                            <span>10</span>
                             <span>&lt;10</span>
                         </div>
                     </div>
@@ -1536,34 +1568,34 @@
         }
 
         function getRainColor(rain) {
-            if (rain >= 300) return '#ec4899';
-            if (rain >= 200) return '#a855f7';
-            if (rain >= 150) return '#ef4444';
-            if (rain >= 130) return '#ef4444';
-            if (rain >= 110) return '#f97316';
-            if (rain >= 90) return '#f97316';
-            if (rain >= 70) return '#facc15';
-            if (rain >= 50) return '#facc15';
-            if (rain >= 40) return '#84cc16';
-            if (rain >= 30) return '#84cc16';
-            if (rain >= 20) return '#10b981';
-            if (rain >= 15) return '#10b981';
-            if (rain >= 10) return '#06b6d4';
-            if (rain >= 6) return '#2563eb';
-            if (rain >= 2) return '#1e3a8a';
-            if (rain >= 1) return '#71717a';
-            return '#71717a';
+            if (rain >= 300) return '#FF66FF';
+            if (rain >= 200) return '#660066';
+            if (rain >= 150) return '#990099';
+            if (rain >= 130) return '#990000';
+            if (rain >= 110) return '#CC0000';
+            if (rain >= 90) return '#FF0000';
+            if (rain >= 70) return '#FF6600';
+            if (rain >= 50) return '#FF9900';
+            if (rain >= 40) return '#FFCC00';
+            if (rain >= 30) return '#FFFF00';
+            if (rain >= 20) return '#009900';
+            if (rain >= 15) return '#00CC00';
+            if (rain >= 10) return '#0000CC';
+            if (rain >= 6) return '#0066FF';
+            if (rain >= 2) return '#00CCFF';
+            if (rain >= 1) return '#99FFFF';
+            return '#C0C0C0';
         }
 
         function getTempColor(temp) {
-            if (temp >= 38) return '#a855f7';
-            if (temp >= 35) return '#ef4444';
-            if (temp >= 32) return '#f97316';
-            if (temp >= 29) return '#facc15';
-            if (temp >= 26) return '#10b981';
-            if (temp >= 23) return '#06b6d4';
-            if (temp >= 20) return '#3b82f6';
-            return '#1e3a8a';
+            if (temp >= 38) return '#990099';
+            if (temp >= 35) return '#FF0000';
+            if (temp >= 30) return '#FF6600';
+            if (temp >= 25) return '#FFCC00';
+            if (temp >= 20) return '#33CC33';
+            if (temp >= 15) return '#33CCCC';
+            if (temp >= 10) return '#3366CC';
+            return '#003366';
         }
 
         function getWindColor(speed) {
@@ -1589,12 +1621,22 @@
                 const data = parseStationElement(station);
                 let customIcon;
 
-                if (currentMapMode === 'rain' || currentMapMode === 'temp' || currentMapMode === 'wind' || currentMapMode === 'windGust') {
+                if (['rain', 'rain2d', 'rain3d', 'temp', 'wind', 'windGust'].includes(currentMapMode)) {
                     let val, bgColor, labelName, unit;
                     if (currentMapMode === 'rain') {
                         val = data.rain;
                         bgColor = getRainColor(val);
-                        labelName = '雨量';
+                        labelName = '日雨量';
+                        unit = 'mm';
+                    } else if (currentMapMode === 'rain2d') {
+                        val = data.rain2d;
+                        bgColor = getRainColor(val);
+                        labelName = '2日累積雨量';
+                        unit = 'mm';
+                    } else if (currentMapMode === 'rain3d') {
+                        val = data.rain3d;
+                        bgColor = getRainColor(val);
+                        labelName = '3日累積雨量';
                         unit = 'mm';
                     } else if (currentMapMode === 'temp') {
                         val = data.temp;
@@ -1616,9 +1658,9 @@
                     let displayVal = isNaN(val) ? '--' : val.toFixed(1);
 
                     let centerTextColor = '#fff';
-                    if (currentMapMode === 'temp' && val >= 26 && val < 32) {
+                    if (currentMapMode === 'temp' && val >= 20 && val < 30) {
                         centerTextColor = '#0f172a';
-                    } else if (currentMapMode === 'rain' && val >= 40 && val < 90) {
+                    } else if ((currentMapMode === 'rain' || currentMapMode === 'rain2d' || currentMapMode === 'rain3d') && val >= 30 && val < 50) {
                         centerTextColor = '#0f172a';
                     }
 
@@ -1638,7 +1680,9 @@
                         <p><b>濕度：</b> ${data.humidity} %</p>
                         <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
                         <p><b>陣風風速：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
-                        <p><b>雨量：</b> ${data.rain} mm</p>
+                        <p><b>日雨量：</b> ${data.rain} mm</p>
+                        <p><b>2日累積雨量：</b> ${data.rain2d.toFixed(1)} mm</p>
+                        <p><b>3日累積雨量：</b> ${data.rain3d.toFixed(1)} mm</p>
                     </div>
                 `);
 
@@ -1648,3 +1692,4 @@
     </script>
 </body>
 </html>
+```[cite: 1]
