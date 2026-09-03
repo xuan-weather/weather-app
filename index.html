@@ -781,9 +781,9 @@
             if (btn && isManualRefresh) btn.classList.add('spinning');
 
             const nonce = Date.now();
-            const url1 = `https://mingxuan.904037.xyz//api/v1/rest/datastore/O-A0001-001_=${nonce}`;
-            const url2 = `https://mingxuan.904037.xyz//api/v1/rest/datastore/O-A0003-001_=${nonce}`;
-            const url4 = `https://mingxuan.904037.xyz//api/v1/rest/datastore/W-C0033-001_=${nonce}`;
+            const url1 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/O-A0001-001_=${nonce}`;
+            const url2 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/O-A0003-001_=${nonce}`;
+            const url4 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/W-C0033-001_=${nonce}`;
 
             try {
                 const [res1, res2, res4] = await Promise.all([
@@ -838,7 +838,7 @@
             const container = document.getElementById('quakeListContainer');
 
             const nonce = Date.now();
-            const quakeUrl = `https://mingxuan.904037.xyz//api/v1/rest/datastore/E-A0015-001_=${nonce}`;
+            const quakeUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/E-A0015-001_=${nonce}`;
 
             try {
                 const res = await fetch(quakeUrl, { cache: 'no-store' }).then(r => r.json());
@@ -888,7 +888,7 @@
             const container = document.getElementById('typhoonListContainer');
 
             const nonce = Date.now();
-            const typhoonUrl = `https://mingxuan.904037.xyz//api/v1/rest/datastore/W-C0034-001_=${nonce}`;
+            const typhoonUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/W-C0034-001_=${nonce}`;
 
             try {
                 const res = await fetch(typhoonUrl, { cache: 'no-store' }).then(r => r.json());
