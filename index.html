@@ -228,6 +228,76 @@
             gap: 10px;
         }
         
+        /* DPIP 風格警特報卡片樣式 */
+        .dpip-hazard-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-left: 5px solid #f59e0b;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .dpip-hazard-card:hover {
+            border-color: rgba(245, 158, 11, 0.6);
+            transform: translateY(-2px);
+        }
+        .dpip-hazard-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .dpip-hazard-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.3px;
+        }
+        .dpip-hazard-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+        .dpip-hazard-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dpip-hazard-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 12px;
+            border-radius: 10px;
+            white-space: pre-line;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .dpip-hazard-footer {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #fbbf24;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+        }
+
         .my-location-widget {
             background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(15, 23, 42, 0.1));
             border: 1px solid rgba(45, 212, 191, 0.25);
@@ -757,7 +827,7 @@
                 </div>
             </div>
             <div class="section-divider-title">
-                <i class="fas fa-bell"></i> 全台各地即時生效中之警特報統整
+                <i class="fas fa-bell"></i> 全台各地即時生效中之警特報統整 (W-C0033-001)
             </div>
             <div id="hazardListContainer">
                 <div class="my-location-status">
@@ -1098,7 +1168,7 @@
                     }
                 });
 
-                warningData = res4.records?.location || [];
+                warningData = res4.records?.location || res4.records?.hazard || res4.records?.dataset?.hazards || res4.records?.dataset?.location || [];
                 renderHazardRecords();
 
                 if (weatherStationData.length > 0) {
@@ -1143,24 +1213,26 @@
             }
         }
 
+        /* 修改為 DPIP 風格的警特報渲染邏輯 */
         function renderHazardRecords() {
             const container = document.getElementById('hazardListContainer');
             if (!container) return;
 
             let activeHazards = [];
             warningData.forEach(loc => {
-                const cityName = (loc.locationName || "").replace('台', '臺');
-                if (loc.hazardConditions && loc.hazardConditions.hazards) {
-                    loc.hazardConditions.hazards.forEach(h => {
-                        activeHazards.push({
-                            city: cityName,
-                            phenomena: h.info?.phenomena || "特別天氣",
-                            significance: h.info?.significance || "",
-                            validTime: h.info?.validTime || {},
-                            content: h.info?.description || h.info?.significance || "無詳細說明"
-                        });
+                const cityName = (loc.locationName || loc.datasetInfo?.datasetDescription || "").replace('台', '臺');
+                const hazardsList = loc.hazardConditions?.hazards || loc.hazards || (loc.info ? [loc] : []);
+                
+                hazardsList.forEach(h => {
+                    const info = h.info || h;
+                    activeHazards.push({
+                        city: cityName,
+                        phenomena: info.phenomena || h.phenomena || "特別天氣警特報",
+                        significance: info.significance || h.significance || "",
+                        validTime: info.validTime || h.validTime || {},
+                        content: info.description || h.description || info.significance || "無詳細說明"
                     });
-                }
+                });
             });
 
             if (activeHazards.length === 0) {
@@ -1182,18 +1254,26 @@
                 let endTime = item.validTime?.endTime ? item.validTime.endTime.replace('T', ' ').substring(0, 16) : '';
                 
                 html += `
-                    <div class="quake-card-item" style="border-left: 4px solid #f59e0b;">
-                        <div class="quake-top-row">
-                            <div class="quake-mag-badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
-                                <i class="fas fa-exclamation-circle"></i> ${item.city} - ${item.phenomena}
+                    <div class="dpip-hazard-card">
+                        <div class="dpip-hazard-top">
+                            <div class="dpip-hazard-badge">
+                                <i class="fas fa-triangle-exclamation"></i> ${item.city || '全台'} · ${item.phenomena}
                             </div>
-                            <div class="quake-time">${startTime ? startTime + ' 起' : ''}</div>
+                            <div class="dpip-hazard-time">
+                                <i class="far fa-clock"></i> ${startTime ? startTime + ' 起' : '即時生效'}
+                            </div>
                         </div>
-                        <div class="quake-location" style="font-size: 14px; color: #fbbf24;">${item.significance}</div>
-                        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px; white-space: pre-line;">
+                        <div class="dpip-hazard-title">
+                            ${item.significance || '氣象特報發布中'}
+                        </div>
+                        <div class="dpip-hazard-desc">
                             ${item.content}
                         </div>
-                        ${endTime ? `<div style="font-size: 11px; color: var(--text-muted); text-align: right;">有效至：${endTime}</div>` : ''}
+                        ${endTime ? `
+                            <div class="dpip-hazard-footer">
+                                <span><i class="far fa-hourglass-end"></i> 有效至：${endTime}</span>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
