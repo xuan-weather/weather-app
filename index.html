@@ -73,6 +73,7 @@
             padding: 6px;
             backdrop-filter: blur(10px);
             gap: 4px;
+            flex-wrap: wrap;
         }
         .tab-btn {
             flex: 1;
@@ -80,20 +81,30 @@
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             border-radius: 12px;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
         .tab-btn.active {
             background: linear-gradient(135deg, #06b6d4, #3b82f6);
             color: #fff;
             box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+        .tab-btn.quake-alert-tab {
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .tab-btn.quake-alert-tab.active {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
         }
 
         .content-panel { display: none; }
@@ -131,6 +142,58 @@
         .action-btn.spinning i { animation: spin 1s linear infinite; }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 地牛 Wake Up 風格速報樣式 */
+        .quake-flash-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.9));
+            border: 2px solid rgba(239, 68, 68, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .quake-flash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+            padding-bottom: 10px;
+        }
+        .quake-live-badge {
+            background: #ef4444;
+            color: white;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: pulse-red 1.5s infinite;
+        }
+        @keyframes pulse-red {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .quake-p-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .quake-p-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+        }
+        .quake-p-box span { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+        .quake-p-box b { font-size: 18px; color: #f87171; font-weight: 800; }
 
         .warning-alert-box {
             background: rgba(239, 68, 68, 0.12);
@@ -510,13 +573,16 @@
             <button id="tabMap" class="tab-btn" onclick="switchMainPage('map')">
                 <i class="fas fa-map-marked-alt"></i> 全台地圖
             </button>
+            <button id="tabQuakeAlert" class="tab-btn quake-alert-tab" onclick="switchMainPage('quakeAlert')">
+                <i class="fas fa-wave-square"></i> 地震速報
+            </button>
             <button id="tabQuake" class="tab-btn" onclick="switchMainPage('quake')">
                 <i class="fas fa-house-chimney-crack"></i> 地震資訊
             </button>
             <button id="tabTyphoon" class="tab-btn" onclick="switchMainPage('typhoon')">
                 <i class="fas fa-hurricane"></i> 颱風資訊
             </button>
-            <button class="tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切換深色/淺色模式" style="flex: 0 0 42px;">
+            <button class="tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切換深色/淺色模式" style="flex: 0 0 38px;">
                 <i class="fas fa-moon" id="themeIcon"></i>
             </button>
         </div>
@@ -664,6 +730,39 @@
             </div>
         </div>
 
+        <!-- 地震速報面板 (地牛 Wake Up 風格) -->
+        <div id="quakeAlertPanel" class="content-panel modern-dashboard">
+            <div class="header">
+                <div class="header-title">
+                    <i class="fas fa-wave-square" style="color: #ef4444;"></i>
+                    <h2>地牛 Wake Up! 即時地震速報</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" onclick="fetchEarthquakeData(true)">
+                        <i class="fas fa-sync-alt"></i> 重新偵測
+                    </button>
+                </div>
+            </div>
+            
+            <div class="section-divider-title">
+                <i class="fas fa-broadcast-tower"></i> 最近一次有感地震速報
+            </div>
+
+            <div id="quakeAlertLiveContainer">
+                <div class="my-location-status">
+                    <i class="fas fa-spinner fa-spin"></i> 正在連線氣象署地震速報系統...
+                </div>
+            </div>
+
+            <div class="section-divider-title" style="margin-top: 20px;">
+                <i class="fas fa-shield-alt"></i> 避難防災指引
+            </div>
+            <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                1. <b>地震發生時：</b>保持鎮靜，就地避難「趴下、掩護、穩住」。<br>
+                2. <b>搖晃停止後：</b>檢查瓦斯、水電開關，留意餘震發生，避免搭乘電梯。
+            </div>
+        </div>
+
         <!-- 地震資訊面板 -->
         <div id="quakePanel" class="content-panel modern-dashboard">
             <div class="header">
@@ -776,11 +875,13 @@
         function switchMainPage(pageId) {
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
+            document.getElementById('tabQuakeAlert').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
             document.getElementById('tabTyphoon').classList.toggle('active', pageId === 'typhoon');
             
             document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
+            document.getElementById('quakeAlertPanel').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
             document.getElementById('typhoonPanel').classList.toggle('active', pageId === 'typhoon');
 
@@ -1137,6 +1238,7 @@
             const btn = document.getElementById('refreshQuakeBtn');
             if (btn && isManualRefresh) btn.classList.add('spinning');
             const container = document.getElementById('quakeListContainer');
+            const alertContainer = document.getElementById('quakeAlertLiveContainer');
 
             const nonce = Date.now();
             const majorEqUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
@@ -1162,26 +1264,73 @@
                 window.quakeDataList = earthquakeData;
 
                 if (earthquakeData.length > 0) {
+                    // 渲染地震速報畫面 (地牛 Wake Up 風格：取最新一筆最即時的地震)
+                    const latestEq = earthquakeData[0];
+                    const info = latestEq.EarthquakeInfo || {};
+                    const originTime = info.OriginTime || '--';
+                    const magnitude = info.EarthquakeMagnitude?.MagnitudeValue || '--';
+                    const depth = info.FocalDepth || '--';
+                    const location = info.Epicenter?.Location || '台灣地區';
+                    const reportImage = latestEq.ReportImageURI || '';
+                    
+                    let intensityListHtml = '';
+                    const shakeAreas = info.Intensity?.ShakingArea || [];
+                    if (shakeAreas.length > 0) {
+                        intensityListHtml = `<div style="margin-top: 12px; font-size: 13px;"><b>各地最大震度：</b><div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">`;
+                        shakeAreas.forEach(area => {
+                            intensityListHtml += `<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); padding: 3px 8px; border-radius: 8px; font-size: 12px;">${area.CountyName}: <b>${area.AreaIntensity}</b></span>`;
+                        });
+                        intensityListHtml += `</div></div>`;
+                    }
+
+                    if (alertContainer) {
+                        alertContainer.innerHTML = `
+                            <div class="quake-flash-card">
+                                <div class="quake-flash-header">
+                                    <div class="quake-live-badge">
+                                        <i class="fas fa-bell"></i> 氣象署即時速報
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">${originTime}</div>
+                                </div>
+                                <div style="font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 8px;">
+                                    ${location}
+                                </div>
+                                <div class="quake-p-grid">
+                                    <div class="quake-p-box">
+                                        <span>地震規模 (M)</span>
+                                        <b>${magnitude}</b>
+                                    </div>
+                                    <div class="quake-p-box">
+                                        <span>地震深度</span>
+                                        <b>${depth} 公里</b>
+                                    </div>
+                                </div>
+                                ${intensityListHtml}
+                                ${reportImage ? `<div style="margin-top: 14px; text-align: center;"><img src="${reportImage}" style="max-width: 100%; border-radius: 12px; border: 1px solid rgba(239,68,68,0.3);" alt="地震速報圖"></div>` : ''}
+                            </div>
+                        `;
+                    }
+
                     let htmlContent = '';
                     earthquakeData.forEach((eq, index) => {
-                        const info = eq.EarthquakeInfo || {};
-                        const originTime = info.OriginTime || '--';
-                        const magnitude = info.EarthquakeMagnitude?.MagnitudeValue || '--';
-                        const depth = info.FocalDepth || '--';
-                        const location = info.Epicenter?.Location || '台灣地區';
+                        const eqInfo = eq.EarthquakeInfo || {};
+                        const oTime = eqInfo.OriginTime || '--';
+                        const mag = eqInfo.EarthquakeMagnitude?.MagnitudeValue || '--';
+                        const dep = eqInfo.FocalDepth || '--';
+                        const loc = eqInfo.Epicenter?.Location || '台灣地區';
                         const isLocal = eq.ReportType === '小區域有感地震報告' ? ' [小區域]' : '';
 
                         htmlContent += `
                             <div class="quake-card-item" onclick="showQuakeDetail(${index})" style="cursor: pointer;" title="點擊查看詳細震度">
                                 <div class="quake-top-row">
                                     <div class="quake-mag-badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
-                                        <i class="fas fa-bolt"></i> 規模 M ${magnitude}${isLocal}
+                                        <i class="fas fa-bolt"></i> 規模 M ${mag}${isLocal}
                                     </div>
-                                    <div class="quake-time">${originTime} <i class="fas fa-chevron-right" style="font-size: 10px; margin-left: 4px;"></i></div>
+                                    <div class="quake-time">${oTime} <i class="fas fa-chevron-right" style="font-size: 10px; margin-left: 4px;"></i></div>
                                 </div>
-                                <div class="quake-location">${location}</div>
+                                <div class="quake-location">${loc}</div>
                                 <div class="quake-details-grid">
-                                    <div>深度：<b>${depth} 公里</b></div>
+                                    <div>深度：<b>${dep} 公里</b></div>
                                     <div>點擊看詳細報告 <i class="fas fa-info-circle"></i></div>
                                 </div>
                             </div>
@@ -1190,11 +1339,13 @@
                     container.innerHTML = htmlContent;
                 } else {
                     container.innerHTML = `<div class="my-location-status">目前查無近期有感地震報告。</div>`;
+                    if (alertContainer) alertContainer.innerHTML = `<div class="my-location-status">目前無即時地震速報。</div>`;
                 }
             } catch (err) {
                 console.error("無法取得地震資料:", err);
                 if (earthquakeData.length === 0) {
                     container.innerHTML = `<div class="my-location-status" style="color: #f87171;"><i class="fas fa-exclamation-triangle"></i> 無法取得地震資訊，請稍後再試。</div>`;
+                    if (alertContainer) alertContainer.innerHTML = `<div class="my-location-status" style="color: #f87171;">無法取得地震速報。</div>`;
                 }
             } finally {
                 if (btn) btn.classList.remove('spinning');
@@ -1490,7 +1641,6 @@
 
             const matchedLocation = warningData.find(loc => (loc.locationName || "").replace('台', '臺') === cityName);
 
-            // 嚴格依照氣象署 API 回傳的真實警特報內容顯示，不進行額外硬編碼覆寫
             if (matchedLocation && matchedLocation.hazardConditions && matchedLocation.hazardConditions.hazards.length > 0) {
                 const hazards = matchedLocation.hazardConditions.hazards;
                 let warningTitles = [];
