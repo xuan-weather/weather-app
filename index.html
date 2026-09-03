@@ -348,7 +348,7 @@
             gap: 6px;
             justify-content: center;
         }
-        /* 完全對應 CWA 雨量色階的漸層條：灰, 藍, 綠, 黃, 紅, 紫, 桃紅 */
+        /* 漸層條樣式 */
         .legend-color-bar-rain {
             width: 12px;
             border-radius: 3px;
@@ -378,15 +378,7 @@
             line-height: 1;
         }
 
-        .weather-badge {
-            display: flex; justify-content: center; align-items: center;
-            padding: 0 6px; height: 26px; border-radius: 13px; color: white;
-            font-weight: 700; font-size: 10px; border: 2px solid rgba(255,255,255,0.85);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.5);
-            white-space: nowrap;
-        }
-
-        /* 修改為圓點表示雨量的樣式 */
+        /* 圓點樣式（雨量、氣溫與風速共用） */
         .weather-dot-badge {
             width: 16px;
             height: 16px;
@@ -1372,7 +1364,7 @@
                 legendBox.innerHTML = `
                     <div class="legend-header-title">氣溫 (°C)</div>
                     <div class="legend-scale-body">
-                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #3b82f6, #06b6d4, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 160px;"></div>
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #1e3a8a, #3b82f6, #06b6d4, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 180px;"></div>
                         <div class="legend-labels-list">
                             <span>38+</span>
                             <span>35</span>
@@ -1390,13 +1382,14 @@
                 legendBox.innerHTML = `
                     <div class="legend-header-title">風速 (m/s)</div>
                     <div class="legend-scale-body">
-                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 140px;"></div>
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 160px;"></div>
                         <div class="legend-labels-list">
                             <span>20+</span>
                             <span>16</span>
                             <span>12</span>
                             <span>8</span>
                             <span>4</span>
+                            <span>2</span>
                             <span>0</span>
                         </div>
                     </div>
@@ -1404,25 +1397,24 @@
             }
         }
 
-        // 完全對應中央氣象署規範的雨量色階數值與色彩
         function getRainColor(rain) {
-            if (rain >= 300) return '#ec4899'; // 300以上 桃紅
-            if (rain >= 200) return '#a855f7'; // 200~300 紫色
-            if (rain >= 150) return '#ef4444'; // 150~200 紅色
+            if (rain >= 300) return '#ec4899';
+            if (rain >= 200) return '#a855f7';
+            if (rain >= 150) return '#ef4444';
             if (rain >= 130) return '#ef4444';
-            if (rain >= 110) return '#f97316'; // 90~130 橘色
+            if (rain >= 110) return '#f97316';
             if (rain >= 90) return '#f97316';
-            if (rain >= 70) return '#facc15';  // 50~90 黃色
+            if (rain >= 70) return '#facc15';
             if (rain >= 50) return '#facc15';
-            if (rain >= 40) return '#84cc16';  // 30~50 黃綠
+            if (rain >= 40) return '#84cc16';
             if (rain >= 30) return '#84cc16';
-            if (rain >= 20) return '#10b981';  // 15~30 綠色
+            if (rain >= 20) return '#10b981';
             if (rain >= 15) return '#10b981';
-            if (rain >= 10) return '#06b6d4';  // 10~15 青藍
-            if (rain >= 6) return '#2563eb';   // 6~10 藍色
-            if (rain >= 2) return '#1e3a8a';   // 2~6 深藍
-            if (rain >= 1) return '#71717a';   // 1~2 灰色
-            return '#71717a';                  // 0 灰色
+            if (rain >= 10) return '#06b6d4';
+            if (rain >= 6) return '#2563eb';
+            if (rain >= 2) return '#1e3a8a';
+            if (rain >= 1) return '#71717a';
+            return '#71717a';
         }
 
         function getTempColor(temp) {
@@ -1442,7 +1434,8 @@
             if (speed >= 12) return '#f97316';
             if (speed >= 8) return '#facc15';
             if (speed >= 4) return '#10b981';
-            return '#3b82f6';
+            if (speed >= 2) return '#3b82f6';
+            return '#71717a';
         }
 
         function renderMapMarkers() {
@@ -1457,34 +1450,33 @@
                 const data = parseStationElement(station);
                 let customIcon;
 
-                if (currentMapMode === 'rain') {
-                    // 改為圓點表示雨量
-                    const bgColor = getRainColor(data.rain);
-                    customIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="雨量: ${data.rain.toFixed(1)} mm"></div>`,
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    });
-                } else {
-                    let badgeText = '--';
-                    let bgColor = '#64748b';
-
-                    if (currentMapMode === 'temp') {
-                        if (!isNaN(data.temp)) {
-                            badgeText = `${data.temp.toFixed(0)}°`;
-                            bgColor = getTempColor(data.temp);
-                        }
-                    } else if (currentMapMode === 'wind') {
-                        badgeText = `${data.windSpeed.toFixed(0)}`;
-                        bgColor = getWindColor(data.windSpeed);
+                // 氣溫、雨量與風速模式全面採用圓點表示
+                if (currentMapMode === 'rain' || currentMapMode === 'temp' || currentMapMode === 'wind') {
+                    let val, bgColor, labelName, unit;
+                    if (currentMapMode === 'rain') {
+                        val = data.rain;
+                        bgColor = getRainColor(val);
+                        labelName = '雨量';
+                        unit = 'mm';
+                    } else if (currentMapMode === 'temp') {
+                        val = data.temp;
+                        bgColor = getTempColor(val);
+                        labelName = '氣溫';
+                        unit = '°C';
+                    } else {
+                        val = data.windSpeed;
+                        bgColor = getWindColor(val);
+                        labelName = '風速';
+                        unit = 'm/s';
                     }
 
+                    let displayVal = isNaN(val) ? '--' : val.toFixed(1);
+
                     customIcon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="weather-badge" style="background-color: ${bgColor};">${badgeText}</div>`,
-                        iconSize: [36, 26],
-                        iconAnchor: [18, 13]
+                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${labelName}: ${displayVal} ${unit}"></div>`,
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
                     });
                 }
 
@@ -1505,4 +1497,3 @@
     </script>
 </body>
 </html>
-```[cite: 1]
