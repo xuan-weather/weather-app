@@ -1264,7 +1264,6 @@
                 window.quakeDataList = earthquakeData;
 
                 if (earthquakeData.length > 0) {
-                    // 渲染地震速報畫面 (地牛 Wake Up 風格：取最新一筆最即時的地震)
                     const latestEq = earthquakeData[0];
                     const info = latestEq.EarthquakeInfo || {};
                     const originTime = info.OriginTime || '--';
