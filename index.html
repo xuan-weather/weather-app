@@ -120,6 +120,28 @@
         }
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
+        
+        /* 警報燈號樣式 */
+        .alarm-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #64748b;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-left: 6px;
+        }
+        .alarm-indicator.active {
+            background-color: #ef4444;
+            box-shadow: 0 0 12px #ef4444, 0 0 22px #ef4444;
+            animation: alarm-pulse 1s infinite alternate;
+        }
+        @keyframes alarm-pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.25); opacity: 1; }
+        }
+
         .header-actions { display: flex; gap: 8px; }
 
         .action-btn {
@@ -590,6 +612,8 @@
                 <div class="header-title">
                     <i class="fas fa-cloud-sun-rain" style="color: #06b6d4;"></i>
                     <h2>台灣天氣觀測站</h2>
+                    <!-- 新增的警報燈號 -->
+                    <span id="dashboardAlarmLight" class="alarm-indicator" title="系統警報燈號"></span>
                 </div>
                 <div class="header-actions">
                     <button class="action-btn" id="refreshBtn" onclick="fetchAllStationData(true)">
@@ -1693,6 +1717,7 @@
             const noAlertBox = document.getElementById('noWarningBox');
             const titleEl = document.getElementById('warningTitleText');
             const contentEl = document.getElementById('warningContentText');
+            const dashboardAlarmLight = document.getElementById('dashboardAlarmLight');
 
             const matchedLocation = warningData.find(loc => (loc.locationName || "").replace('台', '臺') === cityName);
 
@@ -1714,9 +1739,15 @@
                 contentEl.innerText = warningTexts.join('\n') || "該地區目前有發布氣象特報，請注意防範。";
                 alertBox.classList.add('active');
                 noAlertBox.style.display = 'none';
+
+                // 啟動警報燈號
+                if (dashboardAlarmLight) dashboardAlarmLight.classList.add('active');
             } else {
                 alertBox.classList.remove('active');
                 noAlertBox.style.display = 'flex';
+
+                // 關閉警報燈號
+                if (dashboardAlarmLight) dashboardAlarmLight.classList.remove('active');
             }
         }
 
