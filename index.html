@@ -627,7 +627,7 @@
                 <div class="segment-control" id="rankingTypeToggle" style="margin-bottom: 12px;">
                     <button class="segment-btn active" id="btnRankRain" onclick="switchRankingTab('rain')">🌧️ 日雨量</button>
                     <button class="segment-btn" id="btnRankTemp" onclick="switchRankingTab('temp')">🌡️ 高溫排行</button>
-                    <button class="segment-btn" id="btnRankLowTemp" onclick="switchRankingTab('lowTemp')">❄️ 平地低溫</button>
+                    <button class="segment-btn" id="btnRankLowTemp" onclick="switchRankingTab('lowTemp')">❄️ 低溫排行</button>
                 </div>
                 <div id="rankingCardsContainer" class="ranking-cards-grid">
                     <div class="my-location-status" style="grid-column: span 2;">正在計算排行榜資料...</div>
@@ -1077,7 +1077,7 @@
                 container.innerHTML = html;
 
             } else if (currentRankingTab === 'lowTemp') {
-                // 平地低溫排行：過濾標高小於 500 公尺且排除高山測站
+                // 低溫排行：過濾標高小於 500 公尺且排除高山測站
                 let validList = parsedList.filter(item => {
                     if (isNaN(item.temp)) return false;
                     const name = item.stationName;
@@ -1092,7 +1092,7 @@
                 let top10 = validList.slice(0, 10);
 
                 if (top10.length === 0) {
-                    container.innerHTML = `<div class="my-location-status" style="grid-column: span 2;">目前無符合條件的平地低溫資料。</div>`;
+                    container.innerHTML = `<div class="my-location-status" style="grid-column: span 2;">目前無符合條件的低溫資料。</div>`;
                     return;
                 }
 
@@ -1106,7 +1106,7 @@
                             </div>
                             <div class="ranking-main-value" style="color: #38bdf8;">${item.temp.toFixed(1)}<span style="font-size: 14px; font-weight: 600; margin-left: 2px;">°C</span></div>
                             <div class="ranking-sub-info" style="color: #34d399;">
-                                <i class="fas fa-snowflake"></i> 平地低溫：${item.county}${item.town}
+                                <i class="fas fa-snowflake"></i> 低溫排行：${item.county}${item.town}
                             </div>
                         </div>
                     `;
