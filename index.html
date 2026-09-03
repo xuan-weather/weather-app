@@ -1490,6 +1490,7 @@
 
             const matchedLocation = warningData.find(loc => (loc.locationName || "").replace('台', '臺') === cityName);
 
+            // 嚴格依照氣象署 API 回傳的真實警特報內容顯示，不進行額外硬編碼覆寫
             if (matchedLocation && matchedLocation.hazardConditions && matchedLocation.hazardConditions.hazards.length > 0) {
                 const hazards = matchedLocation.hazardConditions.hazards;
                 let warningTitles = [];
@@ -1499,16 +1500,6 @@
                     const info = h.info || {};
                     let phenomena = info.phenomena || "特別天氣";
                     let significance = info.significance || "";
-
-                    // 確保與氣象署警特報一致、基隆無豪雨特報修正過濾邏輯
-                    if (cityName === "基隆市") {
-                        if (phenomena.includes("豪雨")) {
-                            phenomena = "大雨";
-                        }
-                        if (significance.includes("豪雨")) {
-                            significance = significance.replace(/豪雨/g, "大雨");
-                        }
-                    }
 
                     warningTitles.push(phenomena);
                     warningTexts.push(`【${phenomena}】${significance}`);
