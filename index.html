@@ -121,7 +121,6 @@
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
         
-        /* 警報燈號樣式 */
         .alarm-indicator {
             width: 14px;
             height: 14px;
@@ -592,6 +591,9 @@
             <button id="tabMap" class="tab-btn" onclick="switchMainPage('map')">
                 <i class="fas fa-map-marked-alt"></i> 全台地圖
             </button>
+            <button id="tabWeatherState" class="tab-btn" onclick="switchMainPage('weatherState')">
+                <i class="fas fa-cloud-sun"></i> 各地天氣狀況
+            </button>
             <button id="tabQuakeAlert" class="tab-btn quake-alert-tab" onclick="switchMainPage('quakeAlert')">
                 <i class="fas fa-wave-square"></i> 地震速報
             </button>
@@ -612,7 +614,6 @@
                 <div class="header-title">
                     <i class="fas fa-cloud-sun-rain" style="color: #06b6d4;"></i>
                     <h2>台灣天氣觀測站</h2>
-                    <!-- 新增的警報燈號 -->
                     <span id="dashboardAlarmLight" class="alarm-indicator" title="系統警報燈號"></span>
                 </div>
                 <div class="header-actions">
@@ -745,6 +746,7 @@
                 </div>
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
+                    <button id="btnMapWx" onclick="switchMapMode('wx')">🌤️ 天氣狀況</button>
                     <button id="btnMapPop" onclick="switchMapMode('pop')">☂️ 降雨機率</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
@@ -754,6 +756,36 @@
             
             <div class="map-container-wrapper">
                 <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- 各地天氣狀況面板 (修改為全台各地天氣狀況概覽並加入上方跑馬燈) -->
+        <div id="weatherStatePanel" class="content-panel modern-dashboard">
+            <!-- 跑馬燈用在全台各地天氣狀況概覽上方 -->
+            <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 8px 12px; margin-bottom: 14px; overflow: hidden;">
+                <marquee behavior="scroll" direction="left" scrollamount="4" style="color: #38bdf8; font-size: 13px; font-weight: 600;">
+                    <i class="fas fa-bullhorn"></i> 歡迎使用全台各地天氣狀況概覽！隨時掌握各縣市最新天氣型態、降雨機率與即時動態，出門請多加留意氣象變化！
+                </marquee>
+            </div>
+
+            <div class="header">
+                <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
+                    <i class="fas fa-cloud-moon-rain" style="color: #38bdf8; flex-shrink: 0;"></i>
+                    <h2 style="white-space: nowrap; font-size: 1.15rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+                        全台各地天氣狀況概覽
+                    </h2>
+                </div>
+                <div class="header-actions" style="flex-shrink: 0; margin-left: 10px;">
+                    <button class="action-btn" onclick="fetchAllStationData(true)">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="section-divider-title">
+                <i class="fas fa-cloud-sun"></i> 氣象署各縣市天氣型態與圖示 (晴天、多雲、雨天、雷雨)
+            </div>
+            <div id="weatherStateGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; max-height: 520px; overflow-y: auto; padding-right: 4px;">
+                <div class="my-location-status" style="grid-column: span 2;"><i class="fas fa-spinner fa-spin"></i> 正在載入氣象署各地天氣預報資料...</div>
             </div>
         </div>
 
@@ -852,6 +884,7 @@
         let weatherStationData = [];
         let warningData = [];
         let forecastPopData = {}; 
+        let forecastWxData = {};
         let earthquakeData = [];
         let typhoonData = [];
         let cityStationMapping = {};
@@ -903,12 +936,14 @@
         function switchMainPage(pageId) {
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
+            document.getElementById('tabWeatherState').classList.toggle('active', pageId === 'weatherState');
             document.getElementById('tabQuakeAlert').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
             document.getElementById('tabTyphoon').classList.toggle('active', pageId === 'typhoon');
             
             document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
+            document.getElementById('weatherStatePanel').classList.toggle('active', pageId === 'weatherState');
             document.getElementById('quakeAlertPanel').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
             document.getElementById('typhoonPanel').classList.toggle('active', pageId === 'typhoon');
@@ -1093,15 +1128,24 @@
                 warningData = res4.records?.location || res4.records?.hazard || res4.records?.dataset?.hazards || res4.records?.dataset?.location || [];
 
                 forecastPopData = {};
+                forecastWxData = {};
                 const popLocations = resPop.records?.location || resPop.records?.dataset?.location || [];
                 popLocations.forEach(loc => {
                     let locName = (loc.locationName || '').replace('台', '臺');
                     const elements = loc.weatherElement || [];
                     const popElement = elements.find(e => e.elementName === 'PoP');
+                    const wxElement = elements.find(e => e.elementName === 'Wx');
                     if (popElement && popElement.time && popElement.time.length > 0) {
                         const firstTimeSlot = popElement.time[0];
                         const popVal = parseInt(firstTimeSlot.parameter?.parameterName || '0', 10);
                         forecastPopData[locName] = isNaN(popVal) ? 0 : popVal;
+                    }
+                    if (wxElement && wxElement.time && wxElement.time.length > 0) {
+                        const firstTimeSlot = wxElement.time[0];
+                        forecastWxData[locName] = {
+                            text: firstTimeSlot.parameter?.parameterName || '--',
+                            code: firstTimeSlot.parameter?.parameterValue || '1'
+                        };
                     }
                 });
 
@@ -1135,6 +1179,7 @@
                         renderCurrentStationData();
                     }
                     renderRankings();
+                    renderWeatherStateGrid();
                     if (mapInitialized) renderMapMarkers();
                 }
             } catch (err) {
@@ -1151,6 +1196,48 @@
             if (forecastPopData[town] !== undefined) return forecastPopData[town];
             if (forecastPopData[county] !== undefined) return forecastPopData[county];
             return 10;
+        }
+
+        function getCWAWeatherIconObj(code, isNight) {
+            const c = parseInt(code, 10);
+            if (c === 1) {
+                return { icon: isNight ? '🌙' : '☀️' };
+            } else if (c >= 2 && c <= 3) {
+                return { icon: isNight ? '☁️' : '⛅' };
+            } else if (c === 4) {
+                return { icon: '☁️' };
+            } else if (c >= 5 && c <= 7) {
+                return { icon: '🌥️' };
+            } else if (c >= 8 && c <= 14) {
+                return { icon: '🌧️' };
+            } else if (c >= 15 && c <= 22) {
+                return { icon: '⛈️' };
+            }
+            return { icon: '🌤️' };
+        }
+
+        function renderWeatherStateGrid() {
+            const container = document.getElementById('weatherStateGridContainer');
+            if (!container) return;
+
+            let html = '';
+            const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+
+            TAIWAN_REGIONS_ORDER.forEach(county => {
+                const wxInfo = forecastWxData[county] || { text: '--', code: '1' };
+                const pop = forecastPopData[county] !== undefined ? forecastPopData[county] : '--';
+                const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
+
+                html += `
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; transition: all 0.2s;" class="ranking-card">
+                        <div style="font-size: 14px; font-weight: 700; color: var(--text-color);">${county}</div>
+                        <div style="font-size: 34px; margin: 4px 0;" title="${wxInfo.text}">${iconObj.icon}</div>
+                        <div style="font-size: 12px; font-weight: 600; color: #38bdf8; min-height: 28px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">${wxInfo.text}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">降雨機率: ${pop}%</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
 
         function renderRankings() {
@@ -1740,13 +1827,11 @@
                 alertBox.classList.add('active');
                 noAlertBox.style.display = 'none';
 
-                // 啟動警報燈號
                 if (dashboardAlarmLight) dashboardAlarmLight.classList.add('active');
             } else {
                 alertBox.classList.remove('active');
                 noAlertBox.style.display = 'flex';
 
-                // 關閉警報燈號
                 if (dashboardAlarmLight) dashboardAlarmLight.classList.remove('active');
             }
         }
@@ -1919,7 +2004,7 @@
 
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'wx', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1959,6 +2044,16 @@
                         <div class="legend-labels-list">
                             <span>38+</span><span>35</span><span>30</span><span>25</span><span>20</span><span>15</span><span>10</span><span>&lt;10</span>
                         </div>
+                    </div>
+                `;
+            } else if (mode === 'wx') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">天氣狀況分布</div>
+                    <div class="legend-scale-body" style="flex-direction: column; gap: 4px; font-size: 11px;">
+                        <div>☀️ 晴朗 / 晴時多雲</div>
+                        <div>☁️ 多雲 / 陰天</div>
+                        <div>🌧️ 降雨 / 有雨</div>
+                        <div>⛈️ 雷雨</div>
                     </div>
                 `;
             } else if (mode === 'wind' || mode === 'windGust') {
@@ -2041,7 +2136,7 @@
 
                 let customIcon;
 
-                if (['temp', 'pop', 'rain', 'wind', 'windGust'].includes(currentMapMode)) {
+                if (['temp', 'wx', 'pop', 'rain', 'wind', 'windGust'].includes(currentMapMode)) {
                     let val, bgColor, labelName, unit;
                     if (currentMapMode === 'rain') {
                         val = data.rain;
@@ -2058,6 +2153,14 @@
                         bgColor = getTempColor(val);
                         labelName = '氣溫';
                         unit = '°C';
+                    } else if (currentMapMode === 'wx') {
+                        const wxInfo = forecastWxData[county] || { text: '晴', code: '1' };
+                        const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+                        const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
+                        val = iconObj.icon;
+                        bgColor = 'rgba(15, 23, 42, 0.85)';
+                        labelName = '天氣狀況';
+                        unit = wxInfo.text;
                     } else if (currentMapMode === 'wind') {
                         val = data.windSpeed;
                         bgColor = getWindColor(val);
@@ -2071,16 +2174,17 @@
                     }
 
                     let displayVal = isNaN(val) ? '--' : val;
+                    let isEmoji = currentMapMode === 'wx';
                     let centerTextColor = '#fff';
-                    if (currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
-                    else if (currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
-                    else if (currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
+                    if (!isEmoji && currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
+                    else if (!isEmoji && currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
+                    else if (!isEmoji && currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
 
                     customIcon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: ${centerTextColor}; width: 22px; height: 22px; margin-left: -3px; margin-top: -3px;" title="${labelName}: ${displayVal} ${unit}">${!isNaN(val) ? Math.round(val) : '--'}</div>`,
-                        iconSize: [22, 22],
-                        iconAnchor: [11, 11]
+                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: ${isEmoji ? '14px' : '8px'}; font-weight: bold; color: ${centerTextColor}; width: ${isEmoji ? '28px' : '22px'}; height: ${isEmoji ? '28px' : '22px'}; margin-left: ${isEmoji ? '-6px' : '-3px'}; margin-top: ${isEmoji ? '-6px' : '-3px'};" title="${labelName}: ${unit}">${isEmoji ? val : (!isNaN(val) ? Math.round(val) : '--')}</div>`,
+                        iconSize: [isEmoji ? 28 : 22, isEmoji ? 28 : 22],
+                        iconAnchor: [isEmoji ? 14 : 11, isEmoji ? 14 : 11]
                     });
                 }
 
