@@ -613,8 +613,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/4.0.0/Control.FullScreen.min.js"></script>
 
     <script>
-        const CWA_API_KEY = "CWA-8BC01589-C3CD-4A80-9A3B-1AFA46E9F246";
-
         let tempChart = null;
         let map = null;
         let mapInitialized = false;
@@ -782,17 +780,10 @@
             const btn = document.getElementById('refreshBtn');
             if (btn && isManualRefresh) btn.classList.add('spinning');
 
-            if (!CWA_API_KEY) {
-                document.getElementById('currentStationTag').innerText = "❌ 請填寫有效的 API Key";
-                if (btn) btn.classList.remove('spinning');
-                if (callback) callback();
-                return;
-            }
-
             const nonce = Date.now();
-            const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            const url4 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url1 = `https://mingxuan.904037.xyz//api/v1/rest/datastore/O-A0001-001_=${nonce}`;
+            const url2 = `https://mingxuan.904037.xyz//api/v1/rest/datastore/O-A0003-001_=${nonce}`;
+            const url4 = `https://mingxuan.904037.xyz//api/v1/rest/datastore/W-C0033-001_=${nonce}`;
 
             try {
                 const [res1, res2, res4] = await Promise.all([
@@ -847,7 +838,7 @@
             const container = document.getElementById('quakeListContainer');
 
             const nonce = Date.now();
-            const quakeUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const quakeUrl = `https://mingxuan.904037.xyz//api/v1/rest/datastore/E-A0015-001_=${nonce}`;
 
             try {
                 const res = await fetch(quakeUrl, { cache: 'no-store' }).then(r => r.json());
@@ -897,7 +888,7 @@
             const container = document.getElementById('typhoonListContainer');
 
             const nonce = Date.now();
-            const typhoonUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0034-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const typhoonUrl = `https://mingxuan.904037.xyz//api/v1/rest/datastore/W-C0034-001_=${nonce}`;
 
             try {
                 const res = await fetch(typhoonUrl, { cache: 'no-store' }).then(r => r.json());
