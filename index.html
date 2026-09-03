@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,21 +11,63 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        /* 主題變數定義 */
+        :root {
+            --bg-color: #090d16;
+            --text-color: #f1f5f9;
+            --panel-bg: rgba(15, 23, 42, 0.75);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --card-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            --card-border: rgba(255, 255, 255, 0.05);
+            --text-muted: #94a3b8;
+            --select-bg: rgba(30, 41, 59, 0.8);
+            --action-bg: rgba(255, 255, 255, 0.05);
+            --action-border: rgba(255, 255, 255, 0.1);
+            --tab-bg: rgba(255, 255, 255, 0.03);
+            --segment-bg: rgba(15, 23, 42, 0.6);
+            --popup-bg: #fff;
+            --popup-text: #0f172a;
+            --popup-sub: #334155;
+            --legend-bg: rgba(15, 23, 42, 0.88);
+            --legend-text: #f1f5f9;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --text-color: #0f172a;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(0, 0, 0, 0.08);
+            --card-bg: linear-gradient(145deg, rgba(241, 245, 249, 0.9), rgba(255, 255, 255, 0.95));
+            --card-border: rgba(0, 0, 0, 0.06);
+            --text-muted: #64748b;
+            --select-bg: rgba(241, 245, 249, 0.9);
+            --action-bg: rgba(0, 0, 0, 0.04);
+            --action-border: rgba(0, 0, 0, 0.1);
+            --tab-bg: rgba(0, 0, 0, 0.03);
+            --segment-bg: rgba(226, 232, 240, 0.7);
+            --popup-bg: #ffffff;
+            --popup-text: #0f172a;
+            --popup-sub: #334155;
+            --legend-bg: rgba(255, 255, 255, 0.9);
+            --legend-text: #0f172a;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-            background: #090d16;
-            color: #f1f5f9;
+            background: var(--bg-color);
+            color: var(--text-color);
             padding: 12px;
             min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
         }
         
         .container { max-width: 650px; margin: 0 auto; }
 
         .page-tabs {
             display: flex;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--tab-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 16px;
             margin-bottom: 18px;
             padding: 6px;
@@ -37,7 +79,7 @@
             padding: 10px 6px;
             background: none;
             border: none;
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 12px;
             font-weight: 600;
             border-radius: 12px;
@@ -58,20 +100,20 @@
         .content-panel.active { display: block; }
 
         .modern-dashboard {
-            background: rgba(15, 23, 42, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 24px;
             padding: 22px;
             backdrop-filter: blur(16px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
         .header-actions { display: flex; gap: 8px; }
 
         .action-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--action-bg);
+            border: 1px solid var(--action-border);
             color: #38bdf8;
             padding: 8px 14px;
             border-radius: 12px;
@@ -116,7 +158,7 @@
         }
         
         .my-location-widget {
-            background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(15, 23, 42, 0.6));
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(15, 23, 42, 0.1));
             border: 1px solid rgba(45, 212, 191, 0.25);
             border-radius: 18px;
             padding: 16px;
@@ -127,7 +169,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid var(--panel-border);
             padding-bottom: 8px;
         }
         .my-location-title {
@@ -141,14 +183,14 @@
         .my-location-status {
             text-align: center;
             padding: 15px;
-            color: #94a3b8;
+            color: var(--text-muted);
             font-size: 13px;
         }
 
         .section-divider-title {
             font-size: 14px;
             font-weight: 700;
-            color: #94a3b8;
+            color: var(--text-muted);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -159,8 +201,8 @@
 
         .segment-control {
             display: flex;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--segment-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 14px;
             padding: 5px;
             margin-bottom: 16px;
@@ -172,7 +214,7 @@
             text-align: center;
             background: none;
             border: none;
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 14px;
             font-weight: 600;
             border-radius: 10px;
@@ -187,14 +229,14 @@
 
         .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
         .control-group { display: flex; flex-direction: column; gap: 6px; }
-        .control-group label { color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .control-group label { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .select-box {
             width: 100%;
             padding: 12px;
-            background-color: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: var(--select-bg);
+            border: 1px solid var(--action-border);
             border-radius: 12px;
-            color: #f1f5f9;
+            color: var(--text-color);
             font-size: 14px;
             outline: none;
             transition: border-color 0.2s;
@@ -223,14 +265,14 @@
             color: #38bdf8;
             margin-bottom: 2px;
         }
-        .weather-status-text p { font-size: 12px; color: #94a3b8; }
+        .weather-status-text p { font-size: 12px; color: var(--text-muted); }
 
         .meta-info-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 13px;
-            color: #94a3b8;
+            color: var(--text-muted);
             margin-bottom: 16px;
             padding: 0 4px;
         }
@@ -243,27 +285,27 @@
             margin-bottom: 20px;
         }
         .info-card-item {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             padding: 14px 16px;
             border-radius: 16px;
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
-        .info-card-item span { font-size: 12px; color: #94a3b8; }
+        .info-card-item span { font-size: 12px; color: var(--text-muted); }
         .info-card-item b { font-size: 15px; color: #38bdf8; font-weight: 700; }
 
         .chart-card {
-            background: linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 18px 14px 14px 14px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--panel-border);
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
         }
         .chart-header { text-align: left; margin-bottom: 14px; padding-left: 6px; }
         .chart-title {
-            color: #f8fafc;
+            color: var(--text-color);
             font-size: 17px;
             font-weight: 700;
             display: flex;
@@ -278,24 +320,24 @@
             background: linear-gradient(180deg, #06b6d4, #a855f7);
             border-radius: 2px;
         }
-        .chart-subtitle { color: #64748b; font-size: 12px; margin-top: 4px; margin-left: 12px; }
+        .chart-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 4px; margin-left: 12px; }
         .chart-box { position: relative; width: 100%; height: 260px; }
 
         .map-section {
-            background: rgba(15, 23, 42, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 24px;
             padding: 18px;
         }
         .map-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
         .map-title-row { display: flex; justify-content: space-between; align-items: center; }
         .map-mode-btn-group {
-            display: flex; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px; border-radius: 14px;
+            display: flex; gap: 6px; background: var(--select-bg); padding: 5px; border-radius: 14px;
             overflow-x: auto;
         }
         .map-mode-btn-group button {
             flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 600; border: none;
-            border-radius: 10px; cursor: pointer; background: none; color: #64748b; transition: all 0.2s;
+            border-radius: 10px; cursor: pointer; background: none; color: var(--text-muted); transition: all 0.2s;
             white-space: nowrap;
         }
         .map-mode-btn-group button.active { background: #06b6d4; color: #fff; box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4); }
@@ -307,7 +349,7 @@
             min-height: 420px;
             border-radius: 16px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--action-border);
         }
         #map {
             width: 100%;
@@ -322,14 +364,14 @@
             z-index: 1000;
         }
         .custom-vertical-legend {
-            background: rgba(15, 23, 42, 0.88);
+            background: var(--legend-bg);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--action-border);
             border-radius: 12px;
             padding: 8px 10px;
-            color: #f1f5f9;
+            color: var(--legend-text);
             font-size: 11px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             margin: 10px;
             min-width: 120px;
         }
@@ -339,7 +381,7 @@
             margin-bottom: 6px;
             text-align: center;
             color: #38bdf8;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--action-border);
             padding-bottom: 3px;
         }
         .legend-scale-body {
@@ -372,7 +414,7 @@
             justify-content: space-between;
             font-family: monospace;
             font-size: 9px;
-            color: #cbd5e1;
+            color: var(--text-muted);
             text-align: left;
             line-height: 1;
         }
@@ -382,17 +424,17 @@
             height: 16px;
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             display: inline-block;
         }
 
-        .popup-card { color: #0f172a; min-width: 160px; }
-        .popup-card h4 { font-size: 16px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; color: #0f172a; }
-        .popup-card p { font-size: 13px; margin: 4px 0; color: #334155; }
+        .popup-card { color: var(--popup-text); min-width: 160px; }
+        .popup-card h4 { font-size: 16px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; color: var(--popup-text); }
+        .popup-card p { font-size: 13px; margin: 4px 0; color: var(--popup-sub); }
 
         .quake-card-item {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 18px;
             padding: 16px;
             margin-bottom: 12px;
@@ -408,18 +450,18 @@
             color: white; font-weight: 700; font-size: 14px;
             padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; gap: 6px;
         }
-        .quake-time { font-size: 12px; color: #94a3b8; }
-        .quake-location { font-size: 15px; font-weight: 700; color: #f8fafc; }
+        .quake-time { font-size: 12px; color: var(--text-muted); }
+        .quake-location { font-size: 15px; font-weight: 700; color: var(--text-color); }
         .quake-details-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
-            background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 12px; font-size: 12px; color: #cbd5e1;
+            background: rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 12px; font-size: 12px; color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- 頁籤導覽 -->
+        <!-- 頁籤導覽與主題切換按鈕 -->
         <div class="page-tabs">
             <button id="tabDashboard" class="tab-btn active" onclick="switchMainPage('dashboard')">
                 <i class="fas fa-chart-line"></i> 觀測儀表板
@@ -432,6 +474,9 @@
             </button>
             <button id="tabTyphoon" class="tab-btn" onclick="switchMainPage('typhoon')">
                 <i class="fas fa-hurricane"></i> 颱風資訊
+            </button>
+            <button class="tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切換深色/淺色模式" style="flex: 0 0 42px;">
+                <i class="fas fa-moon" id="themeIcon"></i>
             </button>
         </div>
 
@@ -637,12 +682,35 @@
         ];
 
         window.addEventListener('DOMContentLoaded', () => {
+            // 初始化主題設定
+            const savedTheme = localStorage.getItem('cwa_theme') || 'dark';
+            setTheme(savedTheme);
+
             fetchAllStationData(false, () => {
                 initUserLocationWeather();
             });
             fetchEarthquakeData(false);
             fetchTyphoonData(false);
         });
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('cwa_theme', theme);
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (theme === 'dark') {
+                    icon.className = 'fas fa-moon';
+                } else {
+                    icon.className = 'fas fa-sun';
+                }
+            }
+        }
 
         function switchMainPage(pageId) {
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
@@ -917,7 +985,7 @@
                                         <i class="fas fa-hurricane"></i> ${name} ${enName ? '(' + enName + ')' : ''}
                                     </div>
                                 </div>
-                                <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5; white-space: pre-line; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; margin-top: 4px;">
+                                <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; white-space: pre-line; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 12px; margin-top: 4px;">
                                     ${content}
                                 </div>
                             </div>
@@ -930,7 +998,7 @@
                             <i class="fas fa-shield-alt" style="font-size: 18px;"></i> 
                             <div>
                                 <div style="font-weight: 700; margin-bottom: 2px; color: #34d399;">目前無發布海上或陸上颱風警報</div>
-                                <div style="font-size: 12px; color: #94a3b8;">西北太平洋及台灣地區天候穩定，未有生成之警報中颱風。</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">西北太平洋及台灣地區天候穩定，未有生成之警報中颱風。</div>
                             </div>
                         </div>
                     `;
@@ -942,7 +1010,7 @@
                         <i class="fas fa-shield-alt" style="font-size: 18px;"></i> 
                         <div>
                             <div style="font-weight: 700; margin-bottom: 2px; color: #34d399;">目前無發布海上或陸上颱風警報</div>
-                            <div style="font-size: 12px; color: #94a3b8;">目前未偵測到主動發布的颱風警報資訊。</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">目前未偵測到主動發布的颱風警報資訊。</div>
                         </div>
                     </div>
                 `;
@@ -966,7 +1034,7 @@
             let intensityHtml = '';
             const shakeAreas = info.Intensity?.ShakingArea || [];
             if (shakeAreas.length > 0) {
-                intensityHtml = `<div style="margin-top: 10px; font-size: 13px; color: #cbd5e1;"><b>各地最大震度：</b><ul style="margin-left: 20px; margin-top: 4px;">`;
+                intensityHtml = `<div style="margin-top: 10px; font-size: 13px; color: var(--text-muted);"><b>各地最大震度：</b><ul style="margin-left: 20px; margin-top: 4px;">`;
                 shakeAreas.forEach(area => {
                     intensityHtml += `<li>${area.CountyName}：${area.AreaIntensity}</li>`;
                 });
@@ -986,17 +1054,17 @@
             }
 
             modal.innerHTML = `
-                <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); color: #f1f5f9;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 14px;">
+                <div style="background: var(--panel-bg); border: 1px solid var(--action-border); border-radius: 20px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); color: var(--text-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--action-border); padding-bottom: 10px; margin-bottom: 14px;">
                         <h3 style="font-size: 16px; color: #f59e0b;"><i class="fas fa-house-chimney-crack"></i> 地震詳細報告</h3>
-                        <button onclick="document.getElementById('quakeDetailModal').style.display='none'" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;"><i class="fas fa-times"></i></button>
+                        <button onclick="document.getElementById('quakeDetailModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer;"><i class="fas fa-times"></i></button>
                     </div>
                     <div style="font-size: 14px; margin-bottom: 8px;"><b>發布時間：</b> ${originTime}</div>
                     <div style="font-size: 14px; margin-bottom: 8px;"><b>震央位置：</b> ${location}</div>
                     <div style="font-size: 14px; margin-bottom: 8px;"><b>地震規模：</b> M ${magnitude} | <b>深度：</b> ${depth} 公里</div>
-                    <div style="font-size: 13px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; margin-top: 10px; line-height: 1.5; white-space: pre-line;">${reportContent}</div>
+                    <div style="font-size: 13px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 10px; margin-top: 10px; line-height: 1.5; white-space: pre-line;">${reportContent}</div>
                     ${intensityHtml}
-                    ${reportImage ? `<div style="margin-top: 14px; text-align: center;"><img src="${reportImage}" style="max-width: 100%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);" alt="地震報告圖"></div>` : ''}
+                    ${reportImage ? `<div style="margin-top: 14px; text-align: center;"><img src="${reportImage}" style="max-width: 100%; border-radius: 10px; border: 1px solid var(--action-border);" alt="地震報告圖"></div>` : ''}
                     <button onclick="document.getElementById('quakeDetailModal').style.display='none'" style="width: 100%; margin-top: 16px; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer;">關閉視窗</button>
                 </div>
             `;
@@ -1049,10 +1117,10 @@
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <div style="font-size: 28px;">${weatherCond.icon}</div>
                                     <div>
-                                        <div style="font-size: 15px; font-weight: 700; color: #f1f5f9;">
+                                        <div style="font-size: 15px; font-weight: 700; color: var(--text-color);">
                                             ${closestStation.StationName} <span style="font-size: 12px; color: #38bdf8; font-weight: normal;">(${county}${town})</span>
                                         </div>
-                                        <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                                             距離約 ${minDistance.toFixed(1)} 公里 | 觀測時間：${formatObsTime(data.obsTime)}
                                         </div>
                                     </div>
@@ -1061,12 +1129,12 @@
                                     <div style="font-size: 20px; font-weight: 700; color: #38bdf8;">
                                         ${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '-- °C'}
                                     </div>
-                                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
+                                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                                         雨量: ${data.rain.toFixed(1)} mm
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--panel-border); padding-top: 8px;">
                                 <div>💨 風速/陣風：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
                                 <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
                             </div>
@@ -1313,11 +1381,11 @@
                     },
                     scales: {
                         x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            grid: { color: 'rgba(150, 150, 150, 0.1)' },
                             ticks: { color: '#94a3b8', font: { size: 11 }, maxTicksLimit: 8 }
                         },
                         y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            grid: { color: 'rgba(150, 150, 150, 0.1)' },
                             ticks: { color: '#94a3b8', font: { size: 11 } }
                         }
                     }
@@ -1547,10 +1615,9 @@
 
                     let displayVal = isNaN(val) ? '--' : val.toFixed(1);
 
-                    // ★ 修改重點：在地圖上每個測站的圓點內部直接顯示數值（氣溫、雨量、風速或陣風）
                     let centerTextColor = '#fff';
                     if (currentMapMode === 'temp' && val >= 26 && val < 32) {
-                        centerTextColor = '#0f172a'; // 黃色、淺綠色背景搭配深色字體比較清楚
+                        centerTextColor = '#0f172a';
                     } else if (currentMapMode === 'rain' && val >= 40 && val < 90) {
                         centerTextColor = '#0f172a';
                     }
