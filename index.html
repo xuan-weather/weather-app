@@ -591,6 +591,9 @@
             <button id="tabMap" class="tab-btn" onclick="switchMainPage('map')">
                 <i class="fas fa-map-marked-alt"></i> 全台地圖
             </button>
+            <button id="tabCountyForecast" class="tab-btn" onclick="switchMainPage('countyForecast')">
+                <i class="fas fa-temperature-high"></i> 各縣市預報
+            </button>
             <button id="tabWeatherState" class="tab-btn" onclick="switchMainPage('weatherState')">
                 <i class="fas fa-cloud-sun"></i> 各地天氣狀況
             </button>
@@ -759,9 +762,31 @@
             </div>
         </div>
 
-        <!-- 各地天氣狀況面板 (修改為全台各地天氣狀況概覽並加入上方跑馬燈) -->
+        <!-- 各縣市預報面板 (新增) -->
+        <div id="countyForecastPanel" class="content-panel modern-dashboard">
+            <div class="header">
+                <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
+                    <i class="fas fa-temperature-high" style="color: #38bdf8; flex-shrink: 0;"></i>
+                    <h2 style="white-space: nowrap; font-size: 1.15rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+                        全台各縣市天氣預報
+                    </h2>
+                </div>
+                <div class="header-actions" style="flex-shrink: 0; margin-left: 10px;">
+                    <button class="action-btn" onclick="fetchAllStationData(true)">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="section-divider-title">
+                <i class="fas fa-cloud-sun"></i> 氣象署各縣市氣溫範圍與天氣型態
+            </div>
+            <div id="countyForecastGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 520px; overflow-y: auto; padding-right: 4px;">
+                <div class="my-location-status" style="grid-column: span 2;"><i class="fas fa-spinner fa-spin"></i> 正在載入氣象署各縣市預報資料...</div>
+            </div>
+        </div>
+
+        <!-- 各地天氣狀況面板 -->
         <div id="weatherStatePanel" class="content-panel modern-dashboard">
-            <!-- 跑馬燈用在全台各地天氣狀況概覽上方 -->
             <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 8px 12px; margin-bottom: 14px; overflow: hidden;">
                 <marquee behavior="scroll" direction="left" scrollamount="4" style="color: #38bdf8; font-size: 13px; font-weight: 600;">
                     <i class="fas fa-bullhorn"></i> 歡迎使用全台各地天氣狀況概覽！隨時掌握各縣市最新天氣型態、降雨機率與即時動態，出門請多加留意氣象變化！
@@ -885,6 +910,8 @@
         let warningData = [];
         let forecastPopData = {}; 
         let forecastWxData = {};
+        let forecastMinTData = {};
+        let forecastMaxTData = {};
         let earthquakeData = [];
         let typhoonData = [];
         let cityStationMapping = {};
@@ -936,6 +963,7 @@
         function switchMainPage(pageId) {
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
+            document.getElementById('tabCountyForecast').classList.toggle('active', pageId === 'countyForecast');
             document.getElementById('tabWeatherState').classList.toggle('active', pageId === 'weatherState');
             document.getElementById('tabQuakeAlert').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
@@ -943,6 +971,7 @@
             
             document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
+            document.getElementById('countyForecastPanel').classList.toggle('active', pageId === 'countyForecast');
             document.getElementById('weatherStatePanel').classList.toggle('active', pageId === 'weatherState');
             document.getElementById('quakeAlertPanel').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
@@ -1129,12 +1158,17 @@
 
                 forecastPopData = {};
                 forecastWxData = {};
+                forecastMinTData = {};
+                forecastMaxTData = {};
                 const popLocations = resPop.records?.location || resPop.records?.dataset?.location || [];
                 popLocations.forEach(loc => {
                     let locName = (loc.locationName || '').replace('台', '臺');
                     const elements = loc.weatherElement || [];
                     const popElement = elements.find(e => e.elementName === 'PoP');
                     const wxElement = elements.find(e => e.elementName === 'Wx');
+                    const minTElement = elements.find(e => e.elementName === 'MinT');
+                    const maxTElement = elements.find(e => e.elementName === 'MaxT');
+
                     if (popElement && popElement.time && popElement.time.length > 0) {
                         const firstTimeSlot = popElement.time[0];
                         const popVal = parseInt(firstTimeSlot.parameter?.parameterName || '0', 10);
@@ -1146,6 +1180,12 @@
                             text: firstTimeSlot.parameter?.parameterName || '--',
                             code: firstTimeSlot.parameter?.parameterValue || '1'
                         };
+                    }
+                    if (minTElement && minTElement.time && minTElement.time.length > 0) {
+                        forecastMinTData[locName] = minTElement.time[0].parameter?.parameterName || '--';
+                    }
+                    if (maxTElement && maxTElement.time && maxTElement.time.length > 0) {
+                        forecastMaxTData[locName] = maxTElement.time[0].parameter?.parameterName || '--';
                     }
                 });
 
@@ -1180,6 +1220,7 @@
                     }
                     renderRankings();
                     renderWeatherStateGrid();
+                    renderCountyForecastGrid();
                     if (mapInitialized) renderMapMarkers();
                 }
             } catch (err) {
@@ -1234,6 +1275,33 @@
                         <div style="font-size: 34px; margin: 4px 0;" title="${wxInfo.text}">${iconObj.icon}</div>
                         <div style="font-size: 12px; font-weight: 600; color: #38bdf8; min-height: 28px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">${wxInfo.text}</div>
                         <div style="font-size: 11px; color: var(--text-muted);">降雨機率: ${pop}%</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderCountyForecastGrid() {
+            const container = document.getElementById('countyForecastGridContainer');
+            if (!container) return;
+
+            let html = '';
+            const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+
+            TAIWAN_REGIONS_ORDER.forEach(county => {
+                const wxInfo = forecastWxData[county] || { text: '--', code: '1' };
+                const minT = forecastMinTData[county] || '--';
+                const maxT = forecastMaxTData[county] || '--';
+                const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
+
+                html += `
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; transition: all 0.2s;" class="ranking-card">
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-color);">${county}</div>
+                        <div style="font-size: 32px; margin: 2px 0;" title="${wxInfo.text}">${iconObj.icon}</div>
+                        <div style="font-size: 12px; font-weight: 600; color: #38bdf8; min-height: 26px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">${wxInfo.text}</div>
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-color); margin-top: 2px;">
+                            <span style="color: #3b82f6;">${minT}°C</span> ~ <span style="color: #ef4444;">${maxT}°C</span>
+                        </div>
                     </div>
                 `;
             });
@@ -2197,6 +2265,7 @@
                         <p><b>濕度：</b> ${data.humidity} %</p>
                         <p><b>降雨機率：</b> ${popVal} %</p>
                         <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
+                        <p><b>最大陣風：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
                         <p><b>日雨量：</b> ${data.rain} mm</p>
                     </div>
                 `);
