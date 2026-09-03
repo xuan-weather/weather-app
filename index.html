@@ -143,6 +143,57 @@
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        .quake-flash-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.9));
+            border: 2px solid rgba(239, 68, 68, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .quake-flash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+            padding-bottom: 10px;
+        }
+        .quake-live-badge {
+            background: #ef4444;
+            color: white;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: pulse-red 1.5s infinite;
+        }
+        @keyframes pulse-red {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .quake-p-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .quake-p-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+        }
+        .quake-p-box span { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+        .quake-p-box b { font-size: 18px; color: #f87171; font-weight: 800; }
+
         .warning-alert-box {
             background: rgba(239, 68, 68, 0.12);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -308,7 +359,9 @@
         .info-card-item span { font-size: 12px; color: var(--text-muted); }
         .info-card-item b { font-size: 15px; color: #38bdf8; font-weight: 700; }
 
-        .ranking-section-box { margin-bottom: 24px; }
+        .ranking-section-box {
+            margin-bottom: 24px;
+        }
         .ranking-cards-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -529,18 +582,6 @@
             <button id="tabTyphoon" class="tab-btn" onclick="switchMainPage('typhoon')">
                 <i class="fas fa-hurricane"></i> 颱風資訊
             </button>
-            <button id="tabRadar" class="tab-btn" onclick="switchMainPage('radar')">
-                <i class="fas fa-broadcast-tower"></i> 雷達回波
-            </button>
-            <button id="tabSatellite" class="tab-btn" onclick="switchMainPage('satellite')">
-                <i class="fas fa-satellite"></i> 衛星雲圖
-            </button>
-            <button id="tabRainfallMap" class="tab-btn" onclick="switchMainPage('rainfallMap')">
-                <i class="fas fa-cloud-showers-heavy"></i> 日累積雨量圖
-            </button>
-            <button id="tabTempMap" class="tab-btn" onclick="switchMainPage('tempMap')">
-                <i class="fas fa-temperature-high"></i> 氣溫分布圖
-            </button>
             <button class="tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切換深色/淺色模式" style="flex: 0 0 38px;">
                 <i class="fas fa-moon" id="themeIcon"></i>
             </button>
@@ -638,8 +679,8 @@
                     <b id="liveHumidity">-- %</b>
                 </div>
                 <div class="info-card-item">
-                    <span>🌧️ 日累積雨量</span>
-                    <b id="liveRain">-- mm</b>
+                    <span>🌧️ 降雨機率 (PoP)</span>
+                    <b id="livePop" style="color: #38bdf8;">-- %</b>
                 </div>
             </div>
 
@@ -718,7 +759,7 @@
                 <i class="fas fa-shield-alt"></i> 避難防災指引
             </div>
             <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                1. <b>地震發生時：</b>保持鎮靜，就地避難「趴下-掩護-穩住」。<br>
+                1. <b>地震發生時：</b>保持鎮靜，就地避難「趴下、掩護、穩住」。<br>
                 2. <b>搖晃停止後：</b>檢查瓦斯、水電開關，留意餘震發生，避免搭乘電梯。
             </div>
         </div>
@@ -768,81 +809,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 雷達回波面板 -->
-        <div id="radarPanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
-                    <i class="fas fa-broadcast-tower" style="color: #38bdf8;"></i>
-                    <h2>中央氣象署降雨雷達回波</h2>
-                </div>
-            </div>
-            <div class="segment-control" id="radarTypeToggle" style="margin-bottom: 16px;">
-                <button class="segment-btn active" onclick="switchRadar('ntp')">新北降雨雷達</button>
-                <button class="segment-btn" onclick="switchRadar('tc')">台中降雨雷達</button>
-                <button class="segment-btn" onclick="switchRadar('kh')">高雄降雨雷達</button>
-            </div>
-            <div style="text-align: center; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 16px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img id="radarImage" src="https://www.cwa.gov.tw/Data/radar/CV1_3600.png" alt="降雨雷達回波" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--action-border);" />
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">資料來源：中央氣象署即時雷達回波</div>
-            </div>
-        </div>
-
-        <!-- 衛星雲圖面板 -->
-        <div id="satellitePanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
-                    <i class="fas fa-satellite" style="color: #a855f7;"></i>
-                    <h2>中央氣象署衛星雲圖</h2>
-                </div>
-            </div>
-            <div class="segment-control" id="satelliteTypeToggle" style="margin-bottom: 16px;">
-                <button class="segment-btn active" onclick="switchSatellite('panorama')">全景</button>
-                <button class="segment-btn" onclick="switchSatellite('eastasia')">東亞</button>
-                <button class="segment-btn" onclick="switchSatellite('taiwan')">台灣</button>
-            </div>
-            <div style="text-align: center; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 16px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img id="satelliteImage" src="https://www.cwa.gov.tw/Data/satellite/LCC_IR4_CR_2750/LCC_IR4_CR_2750-0.jpg" alt="衛星雲圖" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--action-border);" />
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">資料來源：中央氣象署衛星雲圖</div>
-            </div>
-        </div>
-
-        <!-- 日累積雨量圖面板 -->
-        <div id="rainfallMapPanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
-                    <i class="fas fa-cloud-showers-heavy" style="color: #06b6d4;"></i>
-                    <h2>中央氣象署日累積雨量圖</h2>
-                </div>
-            </div>
-            <div class="segment-control" id="rainfallMapTypeToggle" style="margin-bottom: 16px; flex-wrap: wrap;">
-                <button class="segment-btn active" onclick="switchRainfallMap('today')">今日</button>
-                <button class="segment-btn" onclick="switchRainfallMap('yesterday')">昨日</button>
-                <button class="segment-btn" onclick="switchRainfallMap('before_yesterday')">前日</button>
-                <button class="segment-btn" onclick="switchRainfallMap('day1')">前1日</button>
-                <button class="segment-btn" onclick="switchRainfallMap('day2')">前2日</button>
-                <button class="segment-btn" onclick="switchRainfallMap('day3')">前3日</button>
-                <button class="segment-btn" onclick="switchRainfallMap('day4')">前4日</button>
-            </div>
-            <div style="text-align: center; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 16px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img id="rainfallMapImage" src="https://www.cwa.gov.tw/Data/rainfall/QZJ_C_000000.png" alt="日累積雨量圖" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--action-border);" />
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="rainfallMapDesc">資料來源：中央氣象署累積雨量圖（今日）</div>
-            </div>
-        </div>
-
-        <!-- 氣溫分布圖面板 -->
-        <div id="tempMapPanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
-                    <i class="fas fa-temperature-high" style="color: #f59e0b;"></i>
-                    <h2>中央氣象署氣溫分布圖</h2>
-                </div>
-            </div>
-            <div style="text-align: center; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 16px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img src="https://www.cwa.gov.tw/Data/temperature/T00_000000.png" alt="氣溫分布圖" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--action-border);" onerror="this.src='https://www.cwa.gov.tw/Data/temperature/latest_temp.png'" />
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">資料來源：中央氣象署氣溫分布圖</div>
-            </div>
-        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -859,6 +825,7 @@
         let legendControl = null;
         let weatherStationData = [];
         let warningData = [];
+        let forecastPopData = {}; // 儲存氣象署各縣市鄉鎮降雨機率預報
         let earthquakeData = [];
         let typhoonData = [];
         let cityStationMapping = {};
@@ -908,70 +875,23 @@
         }
 
         function switchMainPage(pageId) {
-            const pages = ['dashboard', 'map', 'quakeAlert', 'quake', 'typhoon', 'radar', 'satellite', 'rainfallMap', 'tempMap'];
-            pages.forEach(p => {
-                const tabBtn = document.getElementById(`tab${p.charAt(0).toUpperCase() + p.slice(1)}`);
-                const panel = document.getElementById(`${p}Panel`);
-                if (tabBtn) tabBtn.classList.toggle('active', p === pageId);
-                if (panel) panel.classList.toggle('active', p === pageId);
-            });
+            document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
+            document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
+            document.getElementById('tabQuakeAlert').classList.toggle('active', pageId === 'quakeAlert');
+            document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
+            document.getElementById('tabTyphoon').classList.toggle('active', pageId === 'typhoon');
+            
+            document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
+            document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
+            document.getElementById('quakeAlertPanel').classList.toggle('active', pageId === 'quakeAlert');
+            document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
+            document.getElementById('typhoonPanel').classList.toggle('active', pageId === 'typhoon');
 
             if (pageId === 'map' && !mapInitialized) {
                 setTimeout(initMap, 100);
             } else if (pageId === 'map' && mapInitialized) {
                 setTimeout(() => { map.invalidateSize(); }, 100);
             }
-        }
-
-        function switchRadar(type) {
-            const btns = document.querySelectorAll('#radarTypeToggle .segment-btn');
-            btns.forEach((b, idx) => {
-                b.classList.toggle('active', (type === 'ntp' && idx === 0) || (type === 'tc' && idx === 1) || (type === 'kh' && idx === 2));
-            });
-            const img = document.getElementById('radarImage');
-            if (type === 'ntp') {
-                img.src = "https://www.cwa.gov.tw/Data/radar/CV1_3600.png";
-            } else if (type === 'tc') {
-                img.src = "https://www.cwa.gov.tw/Data/radar/CV1_CV_3600.png";
-            } else if (type === 'kh') {
-                img.src = "https://www.cwa.gov.tw/Data/radar/CV1_KS_3600.png";
-            }
-        }
-
-        function switchSatellite(type) {
-            const btns = document.querySelectorAll('#satelliteTypeToggle .segment-btn');
-            btns.forEach((b, idx) => {
-                b.classList.toggle('active', (type === 'panorama' && idx === 0) || (type === 'eastasia' && idx === 1) || (type === 'taiwan' && idx === 2));
-            });
-            const img = document.getElementById('satelliteImage');
-            if (type === 'panorama') {
-                img.src = "https://www.cwa.gov.tw/Data/satellite/LCC_IR4_CR_2750/LCC_IR4_CR_2750-0.jpg";
-            } else if (type === 'eastasia') {
-                img.src = "https://www.cwa.gov.tw/Data/satellite/IR4B/TWI_IR4B_1500.jpg";
-            } else if (type === 'taiwan') {
-                img.src = "https://www.cwa.gov.tw/Data/satellite/TWI_IR4_CR/TWI_IR4_CR-0.jpg";
-            }
-        }
-
-        function switchRainfallMap(type) {
-            const btns = document.querySelectorAll('#rainfallMapTypeToggle .segment-btn');
-            const types = ['today', 'yesterday', 'before_yesterday', 'day1', 'day2', 'day3', 'day4'];
-            btns.forEach((b, idx) => {
-                b.classList.toggle('active', types[idx] === type);
-            });
-            const img = document.getElementById('rainfallMapImage');
-            const desc = document.getElementById('rainfallMapDesc');
-            
-            let label = "今日";
-            if (type === 'yesterday') label = "昨日";
-            else if (type === 'before_yesterday') label = "前日";
-            else if (type === 'day1') label = "前1日";
-            else if (type === 'day2') label = "前2日";
-            else if (type === 'day3') label = "前3日";
-            else if (type === 'day4') label = "前4日";
-
-            img.src = "https://www.cwa.gov.tw/Data/rainfall/QZJ_C_000000.png";
-            desc.innerText = `資料來源：中央氣象署累積雨量圖（${label}）`;
         }
 
         function setStationType(type) {
@@ -1089,11 +1009,11 @@
             return R * c;
         }
 
-        function determineWeatherCondition(rain, humidity) {
-            if (rain > 0.5) {
-                return { icon: "🌧️", title: "降雨", desc: "目前有雨或降雨累積，請攜帶雨具" };
-            } else if (humidity !== '--' && humidity > 80) {
-                return { icon: "☁️", title: "多雲 / 陰天", desc: "濕度較高，雲量偏多" };
+        function determineWeatherCondition(rain, humidity, pop = 0) {
+            if (rain > 0.5 || pop >= 70) {
+                return { icon: "🌧️", title: "降雨", desc: "目前有雨或降雨機率高，請攜帶雨具" };
+            } else if (pop >= 30 || (humidity !== '--' && humidity > 80)) {
+                return { icon: "☁️", title: "多雲時陰 / 有雨機會", desc: "雲量偏多，可能有局部降雨" };
             } else if (humidity !== '--' && humidity > 65) {
                 return { icon: "⛅", title: "晴時多雲", desc: "天候狀況良好，雲層偶見" };
             } else {
@@ -1116,12 +1036,14 @@
             const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
             const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
             const url4 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const urlPop = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
-                const [res1, res2, res4] = await Promise.all([
+                const [res1, res2, res4, resPop] = await Promise.all([
                     fetch(url1, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
                     fetch(url2, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Station: [] } })),
-                    fetch(url4, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { location: [] } }))
+                    fetch(url4, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { location: [] } })),
+                    fetch(urlPop, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { dataset: { location: [] } } }))
                 ]);
 
                 const list1 = res1.records?.Station || [];
@@ -1143,6 +1065,21 @@
                 });
 
                 warningData = res4.records?.location || res4.records?.hazard || res4.records?.dataset?.hazards || res4.records?.dataset?.location || [];
+
+                // 解析氣象署 F-C0032-001 各鄉鎮/縣市降雨機率 (PoP)
+                forecastPopData = {};
+                const popLocations = resPop.records?.location || resPop.records?.dataset?.location || [];
+                popLocations.forEach(loc => {
+                    let locName = (loc.locationName || '').replace('台', '臺');
+                    const elements = loc.weatherElement || [];
+                    const popElement = elements.find(e => e.elementName === 'PoP');
+                    if (popElement && popElement.time && popElement.time.length > 0) {
+                        // 取得最近時間的降雨機率數值
+                        const firstTimeSlot = popElement.time[0];
+                        const popVal = parseInt(firstTimeSlot.parameter?.parameterName || '0', 10);
+                        forecastPopData[locName] = isNaN(popVal) ? 0 : popVal;
+                    }
+                });
 
                 if (weatherStationData.length > 0) {
                     let latestTimeStr = '--';
@@ -1184,6 +1121,13 @@
                 }, 500);
                 if (callback) callback();
             }
+        }
+
+        function getPopForStation(county, town) {
+            // 優先對應鄉鎮市區，若無則回退到縣市
+            if (forecastPopData[town] !== undefined) return forecastPopData[town];
+            if (forecastPopData[county] !== undefined) return forecastPopData[county];
+            return 10; // 預設降雨機率
         }
 
         function renderRankings() {
@@ -1613,7 +1557,8 @@
                         const data = parseStationElement(closestStation);
                         const county = (closestStation.GeoInfo?.CountyName || '').replace('台', '臺');
                         const town = closestStation.GeoInfo?.TownName || '';
-                        const weatherCond = determineWeatherCondition(data.rain, data.humidity);
+                        const popVal = getPopForStation(county, town);
+                        const weatherCond = determineWeatherCondition(data.rain, data.humidity, popVal);
 
                         container.innerHTML = `
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
@@ -1632,8 +1577,8 @@
                                     <div style="font-size: 20px; font-weight: 700; color: #38bdf8;">
                                         ${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '-- °C'}
                                     </div>
-                                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                                        雨量: ${data.rain.toFixed(1)} mm
+                                    <div style="font-size: 12px; color: #38bdf8; margin-top: 2px;">
+                                        降雨機率: ${popVal} %
                                     </div>
                                 </div>
                             </div>
@@ -1792,14 +1737,19 @@
                 document.getElementById('liveWind').innerText = '--';
                 document.getElementById('liveHumidity').innerText = '-- %';
                 document.getElementById('liveRain').innerText = '-- mm';
+                document.getElementById('livePop').innerText = '-- %';
             }
         }
 
         function updateDashboardWithStation(targetStation) {
             const data = parseStationElement(targetStation);
-            const townName = targetStation.GeoInfo?.TownName ? ` (${targetStation.GeoInfo.TownName})` : '';
+            const county = (targetStation.GeoInfo?.CountyName || '').replace('台', '臺');
+            const town = targetStation.GeoInfo?.TownName || '';
+            const townName = town ? ` (${town})` : '';
 
-            const weatherCond = determineWeatherCondition(data.rain, data.humidity);
+            const popVal = getPopForStation(county, town);
+            const weatherCond = determineWeatherCondition(data.rain, data.humidity, popVal);
+            
             document.getElementById('weatherStatusIcon').innerText = weatherCond.icon;
             document.getElementById('weatherStatusTitle').innerText = weatherCond.title;
             document.getElementById('weatherStatusDesc').innerText = weatherCond.desc;
@@ -1810,7 +1760,7 @@
             document.getElementById('liveTemp').innerText = !isNaN(data.temp) ? `${data.temp.toFixed(1)} °C` : '-- °C';
             document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})`;
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
-            document.getElementById('liveRain').innerText = data.rain >= 0 ? `${data.rain.toFixed(1)} mm` : '0 mm';
+            document.getElementById('livePop').innerText = `${popVal} %`;
 
             renderPast24hChart(targetStation, data.obsTime);
         }
@@ -2084,13 +2034,17 @@
                 }
 
                 const marker = L.marker([lat, lon], { icon: customIcon });
+                const county = (station.GeoInfo?.CountyName || '').replace('台', '臺');
+                const town = station.GeoInfo?.TownName || '';
+                const popVal = getPopForStation(county, town);
+
                 marker.bindPopup(`
                     <div class="popup-card">
                         <h4>${station.StationName}</h4>
                         <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp + ' °C' : '--'}</p>
                         <p><b>濕度：</b> ${data.humidity} %</p>
+                        <p><b>降雨機率：</b> ${popVal} %</p>
                         <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
-                        <p><b>陣風風速：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
                         <p><b>日雨量：</b> ${data.rain} mm</p>
                     </div>
                 `);
