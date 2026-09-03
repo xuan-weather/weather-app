@@ -503,7 +503,7 @@
         .legend-scale-body {
             display: flex;
             align-items: stretch;
-            gap: 6px;
+            gap: 8px;
             justify-content: center;
         }
         .legend-color-bar-rain {
@@ -516,10 +516,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            font-family: monospace;
-            font-size: 9px;
-            color: var(--text-muted);
-            text-align: left;
+            font-size: 10px;
             line-height: 1;
         }
 
@@ -724,6 +721,7 @@
                 </div>
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
+                    <button id="btnMapPop" onclick="switchMapMode('pop')">☂️ 降雨機率</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
                     <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
@@ -763,7 +761,7 @@
                 <i class="fas fa-shield-alt"></i> 避難防災指引
             </div>
             <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                1. <b>地震發生時：</b>保持鎮靜，就地避難「趴下、掩護、穩住」。<br>
+                1. <b>地震發生時：</b>保持鎮靜，就地避難「趴下-掩護-穩住」。<br>
                 2. <b>搖晃停止後：</b>檢查瓦斯、水電開關，留意餘震發生，避免搭乘電梯。
             </div>
         </div>
@@ -829,7 +827,7 @@
         let legendControl = null;
         let weatherStationData = [];
         let warningData = [];
-        let forecastPopData = {}; // 儲存氣象署各縣市鄉鎮降雨機率預報
+        let forecastPopData = {}; 
         let earthquakeData = [];
         let typhoonData = [];
         let cityStationMapping = {};
@@ -1890,7 +1888,7 @@
 
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'rain', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1912,6 +1910,16 @@
                         </div>
                     </div>
                 `;
+            } else if (mode === 'pop') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">降雨機率 (%)</div>
+                    <div class="legend-scale-body">
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #94a3b8 0%, #38bdf8 30%, #0284c7 60%, #2563eb 85%, #7c3aed 100%); min-height: 160px;"></div>
+                        <div class="legend-labels-list">
+                            <span>100%</span><span>80%</span><span>60%</span><span>40%</span><span>20%</span><span>0%</span>
+                        </div>
+                    </div>
+                `;
             } else if (mode === 'temp') {
                 legendBox.innerHTML = `
                     <div class="legend-header-title">氣溫 (°C)</div>
@@ -1922,19 +1930,9 @@
                         </div>
                     </div>
                 `;
-            } else if (mode === 'wind') {
+            } else if (mode === 'wind' || mode === 'windGust') {
                 legendBox.innerHTML = `
-                    <div class="legend-header-title">風速 (m/s)</div>
-                    <div class="legend-scale-body">
-                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #71717a, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7, #ec4899); min-height: 200px;"></div>
-                        <div class="legend-labels-list">
-                            <span>42+</span><span>37</span><span>33</span><span>29</span><span>25</span><span>21</span><span>17</span><span>14</span><span>11</span><span>8</span><span>6</span><span>3</span><span>2</span><span>0</span>
-                        </div>
-                    </div>
-                `;
-            } else if (mode === 'windGust') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">陣風 (m/s)</div>
+                    <div class="legend-header-title">${mode === 'wind' ? '風速' : '陣風'} (m/s)</div>
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #71717a, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7, #ec4899); min-height: 200px;"></div>
                         <div class="legend-labels-list">
@@ -1963,6 +1961,15 @@
             if (rain >= 2) return '#00CCFF';
             if (rain >= 1) return '#99FFFF';
             return '#C0C0C0';
+        }
+
+        function getPopColor(pop) {
+            if (pop >= 80) return '#7c3aed';
+            if (pop >= 70) return '#2563eb';
+            if (pop >= 50) return '#0284c7';
+            if (pop >= 30) return '#0ea5e9';
+            if (pop >= 10) return '#38bdf8';
+            return '#94a3b8';
         }
 
         function getTempColor(temp) {
@@ -1997,15 +2004,24 @@
                 if (isNaN(lat) || isNaN(lon)) return;
 
                 const data = parseStationElement(station);
+                const county = (station.GeoInfo?.CountyName || '').replace('台', '臺');
+                const town = station.GeoInfo?.TownName || '';
+                const popVal = getPopForStation(county, town);
+
                 let customIcon;
 
-                if (['rain', 'temp', 'wind', 'windGust'].includes(currentMapMode)) {
+                if (['temp', 'pop', 'rain', 'wind', 'windGust'].includes(currentMapMode)) {
                     let val, bgColor, labelName, unit;
                     if (currentMapMode === 'rain') {
                         val = data.rain;
                         bgColor = getRainColor(val);
                         labelName = '日雨量';
                         unit = 'mm';
+                    } else if (currentMapMode === 'pop') {
+                        val = popVal;
+                        bgColor = getPopColor(val);
+                        labelName = '降雨機率';
+                        unit = '%';
                     } else if (currentMapMode === 'temp') {
                         val = data.temp;
                         bgColor = getTempColor(val);
@@ -2023,10 +2039,11 @@
                         unit = 'm/s';
                     }
 
-                    let displayVal = isNaN(val) ? '--' : val.toFixed(1);
+                    let displayVal = isNaN(val) ? '--' : val;
                     let centerTextColor = '#fff';
                     if (currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
                     else if (currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
+                    else if (currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
 
                     customIcon = L.divIcon({
                         className: 'custom-div-icon',
@@ -2037,9 +2054,6 @@
                 }
 
                 const marker = L.marker([lat, lon], { icon: customIcon });
-                const county = (station.GeoInfo?.CountyName || '').replace('台', '臺');
-                const town = station.GeoInfo?.TownName || '';
-                const popVal = getPopForStation(county, town);
 
                 marker.bindPopup(`
                     <div class="popup-card">
