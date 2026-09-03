@@ -682,6 +682,10 @@
                     <span>🌧️ 降雨機率 (PoP)</span>
                     <b id="livePop" style="color: #38bdf8;">-- %</b>
                 </div>
+                <div class="info-card-item" style="grid-column: span 2;">
+                    <span>🌧️ 日累積雨量</span>
+                    <b id="liveRain" style="color: #38bdf8;">-- mm</b>
+                </div>
             </div>
 
             <!-- 氣溫與雨量即時排行榜 (前10名) -->
@@ -1066,7 +1070,6 @@
 
                 warningData = res4.records?.location || res4.records?.hazard || res4.records?.dataset?.hazards || res4.records?.dataset?.location || [];
 
-                // 解析氣象署 F-C0032-001 各鄉鎮/縣市降雨機率 (PoP)
                 forecastPopData = {};
                 const popLocations = resPop.records?.location || resPop.records?.dataset?.location || [];
                 popLocations.forEach(loc => {
@@ -1074,7 +1077,6 @@
                     const elements = loc.weatherElement || [];
                     const popElement = elements.find(e => e.elementName === 'PoP');
                     if (popElement && popElement.time && popElement.time.length > 0) {
-                        // 取得最近時間的降雨機率數值
                         const firstTimeSlot = popElement.time[0];
                         const popVal = parseInt(firstTimeSlot.parameter?.parameterName || '0', 10);
                         forecastPopData[locName] = isNaN(popVal) ? 0 : popVal;
@@ -1124,10 +1126,9 @@
         }
 
         function getPopForStation(county, town) {
-            // 優先對應鄉鎮市區，若無則回退到縣市
             if (forecastPopData[town] !== undefined) return forecastPopData[town];
             if (forecastPopData[county] !== undefined) return forecastPopData[county];
-            return 10; // 預設降雨機率
+            return 10;
         }
 
         function renderRankings() {
@@ -1585,6 +1586,7 @@
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--panel-border); padding-top: 8px;">
                                 <div>💨 風速/陣風：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
                                 <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
+                                <div style="grid-column: span 2;">🌧️ 日累積雨量：<b>${data.rain.toFixed(1)} mm</b></div>
                             </div>
                         `;
                     } else {
@@ -1736,8 +1738,8 @@
                 document.getElementById('liveTemp').innerText = '-- °C';
                 document.getElementById('liveWind').innerText = '--';
                 document.getElementById('liveHumidity').innerText = '-- %';
-                document.getElementById('liveRain').innerText = '-- mm';
                 document.getElementById('livePop').innerText = '-- %';
+                document.getElementById('liveRain').innerText = '-- mm';
             }
         }
 
@@ -1761,6 +1763,7 @@
             document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})`;
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
             document.getElementById('livePop').innerText = `${popVal} %`;
+            document.getElementById('liveRain').innerText = `${data.rain.toFixed(1)} mm`;
 
             renderPast24hChart(targetStation, data.obsTime);
         }
