@@ -1537,6 +1537,17 @@
                 currentMarkersLayer.addLayer(marker);
             });
         }
+   function determineWeatherCondition(rain, humidity) {
+            if (rain > 0.5) {
+                return { icon: "🌧️", title: "降雨", desc: "目前有雨或降雨累積，請攜帶雨具" };
+            } else if (humidity !== '--' && humidity > 80) {
+                return { icon: "☁️", title: "多雲 / 陰天", desc: "濕度較高，雲量偏多" };
+            } else if (humidity !== '--' && humidity > 65) {
+                return { icon: "⛅", title: "晴時多雲", desc: "天候狀況良好，雲層偶見" };
+            } else {
+                return { icon: "☀️", title: "晴朗", desc: "陽光露臉，天晴舒適" };
+            }
+        }
     </script>
 </body>
 </html>
