@@ -106,6 +106,15 @@
             color: #fff;
             box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
         }
+        .tab-btn.hazard-tab {
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        .tab-btn.hazard-tab.active {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
 
         .content-panel { display: none; }
         .content-panel.active { display: block; }
@@ -143,7 +152,6 @@
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* 地牛 Wake Up 風格速報樣式 */
         .quake-flash-card {
             background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.9));
             border: 2px solid rgba(239, 68, 68, 0.6);
@@ -270,6 +278,7 @@
             padding: 5px;
             margin-bottom: 16px;
             gap: 5px;
+            flex-wrap: wrap;
         }
         .segment-btn {
             flex: 1;
@@ -573,6 +582,9 @@
             <button id="tabMap" class="tab-btn" onclick="switchMainPage('map')">
                 <i class="fas fa-map-marked-alt"></i> 全台地圖
             </button>
+            <button id="tabHazard" class="tab-btn hazard-tab" onclick="switchMainPage('hazard')">
+                <i class="fas fa-triangle-exclamation"></i> 警特報紀錄
+            </button>
             <button id="tabQuakeAlert" class="tab-btn quake-alert-tab" onclick="switchMainPage('quakeAlert')">
                 <i class="fas fa-wave-square"></i> 地震速報
             </button>
@@ -689,10 +701,11 @@
                 <div class="section-divider-title" style="margin-top: 15px;">
                     <i class="fas fa-trophy" style="color: #f59e0b;"></i> 即時氣象排行榜 (前 10 名)
                 </div>
-                <div class="segment-control" id="rankingTypeToggle" style="margin-bottom: 12px;">
-                    <button class="segment-btn active" id="btnRankRain" onclick="switchRankingTab('rain')">🌧️ 日雨量</button>
-                    <button class="segment-btn" id="btnRankTemp" onclick="switchRankingTab('temp')">🌡️ 高溫排行</button>
-                    <button class="segment-btn" id="btnRankLowTemp" onclick="switchRankingTab('lowTemp')">❄️ 低溫排行</button>
+                <div class="segment-control" id="rankingTypeToggle" style="margin-bottom: 12px; flex-wrap: nowrap; overflow-x: auto;">
+                    <button class="segment-btn active" id="btnRankRain" onclick="switchRankingTab('rain')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">🌧️ 日雨量</button>
+                    <button class="segment-btn" id="btnRankTemp" onclick="switchRankingTab('temp')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">🌡️ 高溫排行</button>
+                    <button class="segment-btn" id="btnRankLowTemp" onclick="switchRankingTab('lowTemp')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">❄️ 低溫排行</button>
+                    <button class="segment-btn" id="btnRankWindGust" onclick="switchRankingTab('windGust')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">🌪️ 陣風排行</button>
                 </div>
                 <div id="rankingCardsContainer" class="ranking-cards-grid">
                     <div class="my-location-status" style="grid-column: span 2;">正在計算排行榜資料...</div>
@@ -730,7 +743,30 @@
             </div>
         </div>
 
-        <!-- 地震速報面板 (地牛 Wake Up 風格) -->
+        <!-- 警特報紀錄面板 -->
+        <div id="hazardPanel" class="content-panel modern-dashboard">
+            <div class="header">
+                <div class="header-title">
+                    <i class="fas fa-triangle-exclamation" style="color: #f59e0b;"></i>
+                    <h2>氣象署警特報通知紀錄</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" onclick="fetchAllStationData(true)">
+                        <i class="fas fa-sync-alt"></i> 重新整理
+                    </button>
+                </div>
+            </div>
+            <div class="section-divider-title">
+                <i class="fas fa-bell"></i> 全台各地即時生效中之警特報統整
+            </div>
+            <div id="hazardListContainer">
+                <div class="my-location-status">
+                    <i class="fas fa-spinner fa-spin"></i> 正在連線氣象署警特報資料庫...
+                </div>
+            </div>
+        </div>
+
+        <!-- 地震速報面板 -->
         <div id="quakeAlertPanel" class="content-panel modern-dashboard">
             <div class="header">
                 <div class="header-title">
@@ -875,12 +911,14 @@
         function switchMainPage(pageId) {
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
+            document.getElementById('tabHazard').classList.toggle('active', pageId === 'hazard');
             document.getElementById('tabQuakeAlert').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
             document.getElementById('tabTyphoon').classList.toggle('active', pageId === 'typhoon');
             
             document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
+            document.getElementById('hazardPanel').classList.toggle('active', pageId === 'hazard');
             document.getElementById('quakeAlertPanel').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
             document.getElementById('typhoonPanel').classList.toggle('active', pageId === 'typhoon');
@@ -907,6 +945,7 @@
             document.getElementById('btnRankRain').classList.toggle('active', tab === 'rain');
             document.getElementById('btnRankTemp').classList.toggle('active', tab === 'temp');
             document.getElementById('btnRankLowTemp').classList.toggle('active', tab === 'lowTemp');
+            document.getElementById('btnRankWindGust').classList.toggle('active', tab === 'windGust');
             renderRankings();
         }
 
@@ -1060,6 +1099,7 @@
                 });
 
                 warningData = res4.records?.location || [];
+                renderHazardRecords();
 
                 if (weatherStationData.length > 0) {
                     let latestTimeStr = '--';
@@ -1103,6 +1143,63 @@
             }
         }
 
+        function renderHazardRecords() {
+            const container = document.getElementById('hazardListContainer');
+            if (!container) return;
+
+            let activeHazards = [];
+            warningData.forEach(loc => {
+                const cityName = (loc.locationName || "").replace('台', '臺');
+                if (loc.hazardConditions && loc.hazardConditions.hazards) {
+                    loc.hazardConditions.hazards.forEach(h => {
+                        activeHazards.push({
+                            city: cityName,
+                            phenomena: h.info?.phenomena || "特別天氣",
+                            significance: h.info?.significance || "",
+                            validTime: h.info?.validTime || {},
+                            content: h.info?.description || h.info?.significance || "無詳細說明"
+                        });
+                    });
+                }
+            });
+
+            if (activeHazards.length === 0) {
+                container.innerHTML = `
+                    <div class="no-warning-box" style="margin-bottom: 0;">
+                        <i class="fas fa-shield-alt" style="font-size: 18px;"></i> 
+                        <div>
+                            <div style="font-weight: 700; margin-bottom: 2px; color: #34d399;">目前全台各地無發布氣象警特報</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">中央氣象署未發布任何大雨、豪雨、高溫或強風特報。</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            activeHazards.forEach(item => {
+                let startTime = item.validTime?.startTime ? item.validTime.startTime.replace('T', ' ').substring(0, 16) : '';
+                let endTime = item.validTime?.endTime ? item.validTime.endTime.replace('T', ' ').substring(0, 16) : '';
+                
+                html += `
+                    <div class="quake-card-item" style="border-left: 4px solid #f59e0b;">
+                        <div class="quake-top-row">
+                            <div class="quake-mag-badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                                <i class="fas fa-exclamation-circle"></i> ${item.city} - ${item.phenomena}
+                            </div>
+                            <div class="quake-time">${startTime ? startTime + ' 起' : ''}</div>
+                        </div>
+                        <div class="quake-location" style="font-size: 14px; color: #fbbf24;">${item.significance}</div>
+                        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px; white-space: pre-line;">
+                            ${item.content}
+                        </div>
+                        ${endTime ? `<div style="font-size: 11px; color: var(--text-muted); text-align: right;">有效至：${endTime}</div>` : ''}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
         function renderRankings() {
             const container = document.getElementById('rankingCardsContainer');
             if (!container || weatherStationData.length === 0) return;
@@ -1119,7 +1216,8 @@
                     temp: data.temp,
                     rain: data.rain,
                     elevation: data.elevation,
-                    windSpeed: data.windSpeed
+                    windSpeed: data.windSpeed,
+                    windGust: data.windGust
                 };
             });
 
@@ -1206,6 +1304,33 @@
                             <div class="ranking-main-value" style="color: #38bdf8;">${item.temp.toFixed(1)}<span style="font-size: 14px; font-weight: 600; margin-left: 2px;">°C</span></div>
                             <div class="ranking-sub-info" style="color: #34d399;">
                                 <i class="fas fa-snowflake"></i> 低溫排行：${item.county}${item.town}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+
+            } else if (currentRankingTab === 'windGust') {
+                let validList = parsedList.filter(item => !isNaN(item.windGust) && item.windGust >= 0);
+                validList.sort((a, b) => b.windGust - a.windGust);
+                let top10 = validList.slice(0, 10);
+
+                if (top10.length === 0) {
+                    container.innerHTML = `<div class="my-location-status" style="grid-column: span 2;">目前無有效陣風資料。</div>`;
+                    return;
+                }
+
+                let html = '';
+                top10.forEach((item, index) => {
+                    html += `
+                        <div class="ranking-card" onclick="selectStationById('${item.stationId}')" title="點擊檢視此測站儀表板">
+                            <div class="ranking-card-top">
+                                <span class="ranking-station-name">${item.stationName} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">${item.county}</span></span>
+                                <span class="ranking-badge-num">#${index + 1}</span>
+                            </div>
+                            <div class="ranking-main-value" style="color: #a855f7;">${item.windGust.toFixed(1)}<span style="font-size: 14px; font-weight: 600; margin-left: 2px;">m/s</span> <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">(${getWindLevel(item.windGust)})</span></div>
+                            <div class="ranking-sub-info" style="color: #a855f7;">
+                                <i class="fas fa-wind"></i> 區域：${item.county}${item.town}
                             </div>
                         </div>
                     `;
