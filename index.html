@@ -598,8 +598,6 @@
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
-                    <button id="btnMapRain2d" onclick="switchMapMode('rain2d')">🌧️ 2日雨量</button>
-                    <button id="btnMapRain3d" onclick="switchMapMode('rain3d')">🌧️ 3日雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
                     <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
                 </div>
@@ -801,12 +799,6 @@
             let rain = parseFloat(we.Now?.Precipitation ?? we.DailyAccumulation ?? we.NOW?.Precipitation);
             if (isNaN(rain) || rain < 0) rain = 0;
 
-            let rain2d = parseFloat(we.Rainfall2Days ?? (rain * 1.8));
-            if (isNaN(rain2d) || rain2d < 0) rain2d = rain * 1.8;
-
-            let rain3d = parseFloat(we.Rainfall3Days ?? (rain * 2.6));
-            if (isNaN(rain3d) || rain3d < 0) rain3d = rain * 2.6;
-
             let windSpeed = parseFloat(we.WindSpeed ?? we.WDSD);
             if (isNaN(windSpeed) || windSpeed < 0) windSpeed = 0;
 
@@ -824,7 +816,7 @@
                 humidity = Math.round(humidity);
             }
 
-            return { temp, rain, rain2d, rain3d, windSpeed, windGust, windDir, humidity, obsTime: rawObsTime };
+            return { temp, rain, windSpeed, windGust, windDir, humidity, obsTime: rawObsTime };
         }
 
         function isFreewayStation(stationName) {
@@ -1460,7 +1452,7 @@
 
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'rain', 'rain2d', 'rain3d', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'rain', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1472,13 +1464,9 @@
             const legendBox = document.getElementById('verticalLegendBox');
             if (!legendBox) return;
 
-            if (mode === 'rain' || mode === 'rain2d' || mode === 'rain3d') {
-                let titleText = '日雨量 (mm)';
-                if (mode === 'rain2d') titleText = '2日累積雨量 (mm)';
-                if (mode === 'rain3d') titleText = '3日累積雨量 (mm)';
-
+            if (mode === 'rain') {
                 legendBox.innerHTML = `
-                    <div class="legend-header-title">${titleText}</div>
+                    <div class="legend-header-title">日雨量 (mm)</div>
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="min-height: 220px;"></div>
                         <div class="legend-labels-list">
@@ -1621,22 +1609,12 @@
                 const data = parseStationElement(station);
                 let customIcon;
 
-                if (['rain', 'rain2d', 'rain3d', 'temp', 'wind', 'windGust'].includes(currentMapMode)) {
+                if (['rain', 'temp', 'wind', 'windGust'].includes(currentMapMode)) {
                     let val, bgColor, labelName, unit;
                     if (currentMapMode === 'rain') {
                         val = data.rain;
                         bgColor = getRainColor(val);
                         labelName = '日雨量';
-                        unit = 'mm';
-                    } else if (currentMapMode === 'rain2d') {
-                        val = data.rain2d;
-                        bgColor = getRainColor(val);
-                        labelName = '2日累積雨量';
-                        unit = 'mm';
-                    } else if (currentMapMode === 'rain3d') {
-                        val = data.rain3d;
-                        bgColor = getRainColor(val);
-                        labelName = '3日累積雨量';
                         unit = 'mm';
                     } else if (currentMapMode === 'temp') {
                         val = data.temp;
@@ -1660,7 +1638,7 @@
                     let centerTextColor = '#fff';
                     if (currentMapMode === 'temp' && val >= 20 && val < 30) {
                         centerTextColor = '#0f172a';
-                    } else if ((currentMapMode === 'rain' || currentMapMode === 'rain2d' || currentMapMode === 'rain3d') && val >= 30 && val < 50) {
+                    } else if (currentMapMode === 'rain' && val >= 30 && val < 50) {
                         centerTextColor = '#0f172a';
                     }
 
@@ -1681,8 +1659,6 @@
                         <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
                         <p><b>陣風風速：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
                         <p><b>日雨量：</b> ${data.rain} mm</p>
-                        <p><b>2日累積雨量：</b> ${data.rain2d.toFixed(1)} mm</p>
-                        <p><b>3日累積雨量：</b> ${data.rain3d.toFixed(1)} mm</p>
                     </div>
                 `);
 
