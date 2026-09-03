@@ -613,6 +613,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/4.0.0/Control.FullScreen.min.js"></script>
 
     <script>
+        const CWA_API_KEY = "CWA-8BC01589-C3CD-4A80-9A3B-1AFA46E9F246";
+
         let tempChart = null;
         let map = null;
         let mapInitialized = false;
@@ -780,10 +782,17 @@
             const btn = document.getElementById('refreshBtn');
             if (btn && isManualRefresh) btn.classList.add('spinning');
 
+            if (!CWA_API_KEY) {
+                document.getElementById('currentStationTag').innerText = "❌ 請填寫有效的 API Key";
+                if (btn) btn.classList.remove('spinning');
+                if (callback) callback();
+                return;
+            }
+
             const nonce = Date.now();
-            const url1 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/O-A0001-001?_=${nonce}`;
-            const url2 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/O-A0003-001?_=${nonce}`;
-            const url4 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/W-C0033-001?_=${nonce}`;
+            const url1 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url2 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url4 = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const [res1, res2, res4] = await Promise.all([
@@ -838,7 +847,7 @@
             const container = document.getElementById('quakeListContainer');
 
             const nonce = Date.now();
-            const quakeUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/E-A0015-001?_=${nonce}`;
+            const quakeUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const res = await fetch(quakeUrl, { cache: 'no-store' }).then(r => r.json());
@@ -888,7 +897,7 @@
             const container = document.getElementById('typhoonListContainer');
 
             const nonce = Date.now();
-            const typhoonUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/W-C0034-001?_=${nonce}`;
+            const typhoonUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0034-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const res = await fetch(typhoonUrl, { cache: 'no-store' }).then(r => r.json());
@@ -1368,7 +1377,7 @@
 
             if (mode === 'rain') {
                 legendBox.innerHTML = `
-                    <div class="legend-header-title">雨量 (小)</div>
+                    <div class="legend-header-title">雨量 (mm)</div>
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="min-height: 220px;"></div>
                         <div class="legend-labels-list">
@@ -1409,27 +1418,49 @@
                         </div>
                     </div>
                 `;
-            } else if (mode === 'wind' || mode === 'windGust') {
-                const titleText = mode === 'wind' ? '風速 (級數)' : '陣風 (級數)';
+            } else if (mode === 'wind') {
                 legendBox.innerHTML = `
-                    <div class="legend-header-title">${titleText}</div>
+                    <div class="legend-header-title">風速 (m/s)</div>
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #71717a, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7, #ec4899); min-height: 200px;"></div>
                         <div class="legend-labels-list">
-                            <span>42+ (14級+)</span>
-                            <span>37 (13級)</span>
-                            <span>33 (12級)</span>
-                            <span>29 (11級)</span>
-                            <span>25 (10級)</span>
-                            <span>21 (9級)</span>
-                            <span>17 (8級)</span>
-                            <span>14 (7級)</span>
-                            <span>11 (6級)</span>
-                            <span>8 (5級)</span>
-                            <span>6 (4級)</span>
-                            <span>3 (3級)</span>
-                            <span>2 (2級)</span>
-                            <span>0 (0-1級)</span>
+                            <span>42+</span>
+                            <span>37</span>
+                            <span>33</span>
+                            <span>29</span>
+                            <span>25</span>
+                            <span>21</span>
+                            <span>17</span>
+                            <span>14</span>
+                            <span>11</span>
+                            <span>8</span>
+                            <span>6</span>
+                            <span>3</span>
+                            <span>2</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'windGust') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">陣風 (m/s)</div>
+                    <div class="legend-scale-body">
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #71717a, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7, #ec4899); min-height: 200px;"></div>
+                        <div class="legend-labels-list">
+                            <span>42+</span>
+                            <span>37</span>
+                            <span>33</span>
+                            <span>29</span>
+                            <span>25</span>
+                            <span>21</span>
+                            <span>17</span>
+                            <span>14</span>
+                            <span>11</span>
+                            <span>8</span>
+                            <span>6</span>
+                            <span>3</span>
+                            <span>2</span>
+                            <span>0</span>
                         </div>
                     </div>
                 `;
@@ -1516,11 +1547,19 @@
 
                     let displayVal = isNaN(val) ? '--' : val.toFixed(1);
 
+                    // ★ 修改重點：在地圖上每個測站的圓點內部直接顯示數值（氣溫、雨量、風速或陣風）
+                    let centerTextColor = '#fff';
+                    if (currentMapMode === 'temp' && val >= 26 && val < 32) {
+                        centerTextColor = '#0f172a'; // 黃色、淺綠色背景搭配深色字體比較清楚
+                    } else if (currentMapMode === 'rain' && val >= 40 && val < 90) {
+                        centerTextColor = '#0f172a';
+                    }
+
                     customIcon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${labelName}: ${displayVal} ${unit}"></div>`,
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
+                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: ${centerTextColor}; width: 22px; height: 22px; margin-left: -3px; margin-top: -3px;" title="${labelName}: ${displayVal} ${unit}">${!isNaN(val) ? Math.round(val) : '--'}</div>`,
+                        iconSize: [22, 22],
+                        iconAnchor: [11, 11]
                     });
                 }
 
