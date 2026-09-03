@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣天氣與地震觀測站 - Cyber Glow</title>
+    <title>台灣天氣與地震觀測站 - CWA Pro Map</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -285,34 +285,110 @@
             border-radius: 24px;
             padding: 18px;
         }
-        .map-header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        .map-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
         .map-title-row { display: flex; justify-content: space-between; align-items: center; }
         .map-mode-btn-group {
             display: flex; gap: 6px; background: rgba(30, 41, 59, 0.8); padding: 5px; border-radius: 14px;
+            overflow-x: auto;
         }
         .map-mode-btn-group button {
-            flex: 1; padding: 8px 14px; font-size: 13px; font-weight: 600; border: none;
+            flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 600; border: none;
             border-radius: 10px; cursor: pointer; background: none; color: #64748b; transition: all 0.2s;
+            white-space: nowrap;
         }
         .map-mode-btn-group button.active { background: #06b6d4; color: #fff; box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4); }
 
+        .map-container-wrapper {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 270px);
+            min-height: 420px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         #map {
-            width: 100%; height: calc(100vh - 220px); min-height: 450px;
-            border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 隱藏 Leaflet 版權宣告 */
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+
+        /* 氣象署風格：直立式專業圖例卡片 */
+        .leaflet-bottom.leaflet-left {
+            z-index: 1000;
+        }
+        .custom-vertical-legend {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 8px 10px;
+            color: #f1f5f9;
+            font-size: 11px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            margin: 10px;
+            min-width: 85px;
+        }
+        .legend-header-title {
+            font-weight: 700;
+            font-size: 11px;
+            margin-bottom: 6px;
+            text-align: center;
+            color: #38bdf8;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 3px;
+        }
+        .legend-scale-body {
+            display: flex;
+            align-items: stretch;
+            gap: 6px;
+            justify-content: center;
+        }
+        /* 完全對應 CWA 雨量色階的漸層條：灰、藍、綠、黃、紅、紫、桃紅 */
+        .legend-color-bar-rain {
+            width: 12px;
+            border-radius: 3px;
+            background: linear-gradient(to top, 
+                #71717a 0%, 
+                #1e3a8a 10%, 
+                #2563eb 20%, 
+                #06b6d4 30%, 
+                #10b981 40%, 
+                #84cc16 50%, 
+                #facc15 60%, 
+                #f97316 70%, 
+                #ef4444 80%, 
+                #a855f7 90%, 
+                #ec4899 100%
+            );
+            min-height: 220px;
+        }
+        .legend-labels-list {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 9px;
+            color: #cbd5e1;
+            text-align: left;
+            line-height: 1;
         }
 
         .weather-badge {
             display: flex; justify-content: center; align-items: center;
-            width: 40px; height: 40px; border-radius: 50%; color: white;
-            font-weight: 700; font-size: 12px; border: 2px solid rgba(255,255,255,0.9);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            width: 30px; height: 30px; border-radius: 50%; color: white;
+            font-weight: 700; font-size: 10px; border: 2px solid rgba(255,255,255,0.85);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.5);
         }
 
         .popup-card { color: #0f172a; min-width: 160px; }
         .popup-card h4 { font-size: 16px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; color: #0f172a; }
         .popup-card p { font-size: 13px; margin: 4px 0; color: #334155; }
 
-        /* 地震頁面專屬樣式 */
         .quake-card-item {
             background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -324,12 +400,12 @@
             gap: 10px;
             transition: border-color 0.2s;
         }
-        .quake-card-item:hover { border-color: rgba(245, 158, 11, 0.4); }
+        .quake-card-item:hover { border-color: rgba(6, 182, 212, 0.4); }
         .quake-top-row { display: flex; justify-content: space-between; align-items: center; }
         .quake-mag-badge {
-            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
             color: white; font-weight: 700; font-size: 14px;
-            padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; gap: 6px;
         }
         .quake-time { font-size: 12px; color: #94a3b8; }
         .quake-location { font-size: 15px; font-weight: 700; color: #f8fafc; }
@@ -342,7 +418,7 @@
 <body>
 
     <div class="container">
-        <!-- 頁籤導覽 (擴充地震頁面) -->
+        <!-- 頁籤導覽 -->
         <div class="page-tabs">
             <button id="tabDashboard" class="tab-btn active" onclick="switchMainPage('dashboard')">
                 <i class="fas fa-chart-line"></i> 觀測儀表板
@@ -352,6 +428,9 @@
             </button>
             <button id="tabQuake" class="tab-btn" onclick="switchMainPage('quake')">
                 <i class="fas fa-house-chimney-crack"></i> 地震資訊
+            </button>
+            <button id="tabTyphoon" class="tab-btn" onclick="switchMainPage('typhoon')">
+                <i class="fas fa-hurricane"></i> 颱風資訊
             </button>
         </div>
 
@@ -475,7 +554,10 @@
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
                 </div>
             </div>
-            <div id="map"></div>
+            
+            <div class="map-container-wrapper">
+                <div id="map"></div>
+            </div>
         </div>
 
         <!-- 地震資訊面板 -->
@@ -500,6 +582,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- 颱風資訊面板 -->
+        <div id="typhoonPanel" class="content-panel modern-dashboard">
+            <div class="header">
+                <div class="header-title">
+                    <i class="fas fa-hurricane" style="color: #06b6d4;"></i>
+                    <h2>颱風動態與警報</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" id="refreshTyphoonBtn" onclick="fetchTyphoonData(true)">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="section-divider-title">
+                <i class="fas fa-info-circle"></i> 氣象署颱風警報及路徑動態
+            </div>
+            <div id="typhoonListContainer">
+                <div class="my-location-status">
+                    <i class="fas fa-spinner fa-spin"></i> 正在載入氣象署颱風資料...
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -512,9 +617,11 @@
         let mapInitialized = false;
         let currentMapMode = 'temp'; 
         let currentMarkersLayer = L.layerGroup();
+        let legendControl = null;
         let weatherStationData = [];
         let warningData = [];
         let earthquakeData = [];
+        let typhoonData = [];
         let cityStationMapping = {};
         let currentStationType = 'normal';
 
@@ -531,19 +638,24 @@
                 initUserLocationWeather();
             });
             fetchEarthquakeData(false);
+            fetchTyphoonData(false);
         });
 
         function switchMainPage(pageId) {
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
             document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
+            document.getElementById('tabTyphoon').classList.toggle('active', pageId === 'typhoon');
             
             document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
             document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
+            document.getElementById('typhoonPanel').classList.toggle('active', pageId === 'typhoon');
 
             if (pageId === 'map' && !mapInitialized) {
                 setTimeout(initMap, 100);
+            } else if (pageId === 'map' && mapInitialized) {
+                setTimeout(() => { map.invalidateSize(); }, 100);
             }
         }
 
@@ -701,7 +813,6 @@
             }
         }
 
-        // 抓取氣象署地震資料 (支援點擊查看詳細資訊)[cite: 3]
         async function fetchEarthquakeData(isManualRefresh = false) {
             const btn = document.getElementById('refreshQuakeBtn');
             if (btn && isManualRefresh) btn.classList.add('spinning');
@@ -727,7 +838,7 @@
                         htmlContent += `
                             <div class="quake-card-item" onclick="showQuakeDetail(${index})" style="cursor: pointer;" title="點擊查看詳細震度">
                                 <div class="quake-top-row">
-                                    <div class="quake-mag-badge">
+                                    <div class="quake-mag-badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
                                         <i class="fas fa-bolt"></i> 規模 M ${magnitude}
                                     </div>
                                     <div class="quake-time">${originTime} <i class="fas fa-chevron-right" style="font-size: 10px; margin-left: 4px;"></i></div>
@@ -752,7 +863,58 @@
             }
         }
 
-        // 點擊地震卡片時跳出詳細內容的互動函式
+        async function fetchTyphoonData(isManualRefresh = false) {
+            const btn = document.getElementById('refreshTyphoonBtn');
+            if (btn && isManualRefresh) btn.classList.add('spinning');
+            const container = document.getElementById('typhoonListContainer');
+
+            const nonce = Date.now();
+            const typhoonUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0034-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+
+            try {
+                const res = await fetch(typhoonUrl, { cache: 'no-store' }).then(r => r.json());
+                typhoonData = res.records?.Typhoon || res.records?.location || [];
+
+                if (typhoonData.length > 0) {
+                    let htmlContent = '';
+                    typhoonData.forEach((typhoon) => {
+                        const name = typhoon.TyphoonName || typhoon.name || '颱風動態';
+                        const enName = typhoon.TyphoonEnName || '';
+                        const content = typhoon.Description || typhoon.warningMessage || '目前氣象署已發布相關颱風警報資訊。';
+
+                        htmlContent += `
+                            <div class="quake-card-item">
+                                <div class="quake-top-row">
+                                    <div class="quake-mag-badge">
+                                        <i class="fas fa-hurricane"></i> ${name} ${enName ? '(' + enName + ')' : ''}
+                                    </div>
+                                </div>
+                                <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5; white-space: pre-line; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; margin-top: 4px;">
+                                    ${content}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = htmlContent;
+                } else {
+                    container.innerHTML = `
+                        <div class="no-warning-box" style="margin-bottom: 0;">
+                            <i class="fas fa-shield-alt"></i> 目前西北太平洋及台灣地區無發布海上或陸上颱風警報
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error("無法取得颱風資料:", err);
+                container.innerHTML = `
+                    <div class="no-warning-box" style="margin-bottom: 0;">
+                        <i class="fas fa-shield-alt"></i> 目前無主動發布的颱風警報資訊
+                    </div>
+                `;
+            } finally {
+                if (btn) btn.classList.remove('spinning');
+            }
+        }
+
         function showQuakeDetail(index) {
             const eq = window.quakeDataList?.[index];
             if (!eq) return;
@@ -1129,14 +1291,31 @@
 
         function initMap() {
             if (mapInitialized) return;
-            map = L.map('map').setView([23.9738, 120.9820], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{z}.png', {
-                attribution: '&copy; OpenStreetMap & CARTO',
+            map = L.map('map', { zoomControl: false }).setView([23.5, 121.0], 8);
+            
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-eGP, and the GIS User Community',
                 maxZoom: 18
             }).addTo(map);
-            
+
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 18
+            }).addTo(map);
+
             map.addLayer(currentMarkersLayer);
+
+            const LegendControl = L.Control.extend({
+                options: { position: 'bottomleft' },
+                onAdd: function (map) {
+                    const div = L.DomUtil.create('div', 'custom-vertical-legend');
+                    div.id = 'verticalLegendBox';
+                    return div;
+                }
+            });
+            legendControl = new LegendControl().addTo(map);
+
             mapInitialized = true;
+            updateMapLegendUI(currentMapMode);
             renderMapMarkers();
         }
 
@@ -1145,7 +1324,114 @@
             ['temp', 'rain', 'wind'].forEach(m => {
                 document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`).classList.toggle('active', m === mode);
             });
+            updateMapLegendUI(mode);
             if (mapInitialized) renderMapMarkers();
+        }
+
+        function updateMapLegendUI(mode) {
+            const legendBox = document.getElementById('verticalLegendBox');
+            if (!legendBox) return;
+
+            if (mode === 'rain') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">雨量 (小)</div>
+                    <div class="legend-scale-body">
+                        <div class="legend-color-bar-rain" style="min-height: 220px;"></div>
+                        <div class="legend-labels-list">
+                            <span>300</span>
+                            <span>200</span>
+                            <span>150</span>
+                            <span>130</span>
+                            <span>110</span>
+                            <span>90</span>
+                            <span>70</span>
+                            <span>50</span>
+                            <span>40</span>
+                            <span>30</span>
+                            <span>20</span>
+                            <span>15</span>
+                            <span>10</span>
+                            <span>6</span>
+                            <span>2</span>
+                            <span>1</span>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'temp') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">氣溫 (°C)</div>
+                    <div class="legend-scale-body">
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #3b82f6, #06b6d4, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 160px;"></div>
+                        <div class="legend-labels-list">
+                            <span>38+</span>
+                            <span>35</span>
+                            <span>32</span>
+                            <span>29</span>
+                            <span>26</span>
+                            <span>23</span>
+                            <span>20</span>
+                            <span>15</span>
+                            <span>&lt;10</span>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'wind') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">風速 (m/s)</div>
+                    <div class="legend-scale-body">
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #10b981, #facc15, #f97316, #ef4444, #a855f7); min-height: 140px;"></div>
+                        <div class="legend-labels-list">
+                            <span>20+</span>
+                            <span>16</span>
+                            <span>12</span>
+                            <span>8</span>
+                            <span>4</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 完全對應中央氣象署規範的雨量色階數值與色彩
+        function getRainColor(rain) {
+            if (rain >= 300) return '#ec4899'; // 300以上 桃紅
+            if (rain >= 200) return '#a855f7'; // 200~300 紫色
+            if (rain >= 150) return '#ef4444'; // 150~200 紅色
+            if (rain >= 130) return '#ef4444';
+            if (rain >= 110) return '#f97316'; // 90~130 橘色
+            if (rain >= 90) return '#f97316';
+            if (rain >= 70) return '#facc15';  // 50~90 黃色
+            if (rain >= 50) return '#facc15';
+            if (rain >= 40) return '#84cc16';  // 30~50 黃綠
+            if (rain >= 30) return '#84cc16';
+            if (rain >= 20) return '#10b981';  // 15~30 綠色
+            if (rain >= 15) return '#10b981';
+            if (rain >= 10) return '#06b6d4';  // 10~15 青藍
+            if (rain >= 6) return '#2563eb';   // 6~10 藍色
+            if (rain >= 2) return '#1e3a8a';   // 2~6 深藍
+            if (rain >= 1) return '#71717a';   // 1~2 灰色
+            return '#71717a';                  // 0 灰色
+        }
+
+        function getTempColor(temp) {
+            if (temp >= 38) return '#a855f7';
+            if (temp >= 35) return '#ef4444';
+            if (temp >= 32) return '#f97316';
+            if (temp >= 29) return '#facc15';
+            if (temp >= 26) return '#10b981';
+            if (temp >= 23) return '#06b6d4';
+            if (temp >= 20) return '#3b82f6';
+            return '#1e3a8a';
+        }
+
+        function getWindColor(speed) {
+            if (speed >= 20) return '#a855f7';
+            if (speed >= 16) return '#ef4444';
+            if (speed >= 12) return '#f97316';
+            if (speed >= 8) return '#facc15';
+            if (speed >= 4) return '#10b981';
+            return '#3b82f6';
         }
 
         function renderMapMarkers() {
@@ -1164,21 +1450,21 @@
                 if (currentMapMode === 'temp') {
                     if (!isNaN(data.temp)) {
                         badgeText = `${data.temp.toFixed(0)}°`;
-                        bgColor = data.temp > 30 ? '#ef4444' : (data.temp > 20 ? '#f59e0b' : '#3b82f6');
+                        bgColor = getTempColor(data.temp);
                     }
                 } else if (currentMapMode === 'rain') {
-                    badgeText = `${data.rain.toFixed(0)}m`;
-                    bgColor = data.rain > 10 ? '#3b82f6' : (data.rain > 0 ? '#06b6d4' : '#64748b');
+                    badgeText = `${data.rain.toFixed(0)}`;
+                    bgColor = getRainColor(data.rain);
                 } else if (currentMapMode === 'wind') {
                     badgeText = `${data.windSpeed.toFixed(0)}`;
-                    bgColor = data.windSpeed > 10 ? '#ef4444' : '#10b981';
+                    bgColor = getWindColor(data.windSpeed);
                 }
 
                 const customIcon = L.divIcon({
                     className: 'custom-div-icon',
                     html: `<div class="weather-badge" style="background-color: ${bgColor};">${badgeText}</div>`,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20]
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
                 });
 
                 const marker = L.marker([lat, lon], { icon: customIcon });
