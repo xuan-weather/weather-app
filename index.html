@@ -691,6 +691,11 @@
             });
             fetchEarthquakeData(false);
             fetchTyphoonData(false);
+
+            // 自動定時背景檢查：每 30 秒自動向氣象署同步最新地震與氣象報告
+            setInterval(() => {
+                fetchEarthquakeData(false);
+            }, 30000);
         });
 
         function toggleTheme() {
@@ -936,11 +941,28 @@
             const container = document.getElementById('quakeListContainer');
 
             const nonce = Date.now();
-            const quakeUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            // 同時請求「顯著有感地震 (E-A0015-001)」與「小區域有感地震 (E-A0016-001)」
+            const majorEqUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const localEqUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0016-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
-                const res = await fetch(quakeUrl, { cache: 'no-store' }).then(r => r.json());
-                earthquakeData = res.records?.Earthquake || [];
+                const [resMajor, resLocal] = await Promise.all([
+                    fetch(majorEqUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Earthquake: [] } })),
+                    fetch(localEqUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ records: { Earthquake: [] } }))
+                ]);
+
+                const majorList = resMajor.records?.Earthquake || [];
+                const localList = resLocal.records?.Earthquake || [];
+
+                // 合併兩者並依照發震時間（OriginTime）由新到舊排序
+                let combinedEq = [...majorList, ...localList];
+                combinedEq.sort((a, b) => {
+                    const timeA = new Date(a.EarthquakeInfo?.OriginTime || 0).getTime();
+                    const timeB = new Date(b.EarthquakeInfo?.OriginTime || 0).getTime();
+                    return timeB - timeA;
+                });
+
+                earthquakeData = combinedEq;
                 window.quakeDataList = earthquakeData;
 
                 if (earthquakeData.length > 0) {
@@ -951,12 +973,13 @@
                         const magnitude = info.EarthquakeMagnitude?.MagnitudeValue || '--';
                         const depth = info.FocalDepth || '--';
                         const location = info.Epicenter?.Location || '台灣地區';
+                        const isLocal = eq.ReportType === '小區域有感地震報告' ? ' [小區域]' : '';
 
                         htmlContent += `
                             <div class="quake-card-item" onclick="showQuakeDetail(${index})" style="cursor: pointer;" title="點擊查看詳細震度">
                                 <div class="quake-top-row">
                                     <div class="quake-mag-badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
-                                        <i class="fas fa-bolt"></i> 規模 M ${magnitude}
+                                        <i class="fas fa-bolt"></i> 規模 M ${magnitude}${isLocal}
                                     </div>
                                     <div class="quake-time">${originTime} <i class="fas fa-chevron-right" style="font-size: 10px; margin-left: 4px;"></i></div>
                                 </div>
@@ -974,7 +997,9 @@
                 }
             } catch (err) {
                 console.error("無法取得地震資料:", err);
-                container.innerHTML = `<div class="my-location-status" style="color: #f87171;"><i class="fas fa-exclamation-triangle"></i> 無法取得地震資訊，請稍後再試。</div>`;
+                if (earthquakeData.length === 0) {
+                    container.innerHTML = `<div class="my-location-status" style="color: #f87171;"><i class="fas fa-exclamation-triangle"></i> 無法取得地震資訊，請稍後再試。</div>`;
+                }
             } finally {
                 if (btn) btn.classList.remove('spinning');
             }
