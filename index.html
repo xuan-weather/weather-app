@@ -761,7 +761,7 @@
             </div>
         </div>
 
-        <!-- 各縣市預報面板 (新增) -->
+        <!-- 各縣市預報面板 -->
         <div id="countyForecastPanel" class="content-panel modern-dashboard">
             <div class="header">
                 <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
@@ -1435,7 +1435,7 @@
                                 <span class="ranking-station-name">${item.stationName} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">${item.county}</span></span>
                                 <span class="ranking-badge-num">#${index + 1}</span>
                             </div>
-                            <div class="ranking-main-value" style="color: #a855f7;">${item.windGust.toFixed(1)}<span style="font-size: 14px; font-weight: 600; margin-left: 2px;">m/s</span> <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">(${getWindLevel(item.windGust)})</span></div>
+                            <div class="ranking-main-value" style="color: #a855f7;">${Math.round(item.windGust)}<span style="font-size: 14px; font-weight: 600; margin-left: 2px;">m/s</span> <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">(${getWindLevel(item.windGust)})</span></div>
                             <div class="ranking-sub-info" style="color: #a855f7;">
                                 <i class="fas fa-wind"></i> 區域：${item.county}${item.town}
                             </div>
@@ -1760,7 +1760,7 @@
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--panel-border); padding-top: 8px;">
-                                <div>💨 風速/陣風：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
+                                <div>💨 風速/陣風：<b>${getWindDirectionText(data.windDir)} ${Math.round(data.windSpeed)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${Math.round(data.windGust)} m/s (${getWindLevel(data.windGust)})</b></div>
                                 <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
                                 <div style="grid-column: span 2;">🌧️ 日累積雨量：<b>${data.rain.toFixed(1)} mm</b></div>
                             </div>
@@ -1941,7 +1941,7 @@
             document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(data.obsTime)}`;
 
             document.getElementById('liveTemp').innerText = !isNaN(data.temp) ? `${data.temp.toFixed(1)} °C` : '-- °C';
-            document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})`;
+            document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${Math.round(data.windSpeed)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${Math.round(data.windGust)} m/s (${getWindLevel(data.windGust)})`;
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
             document.getElementById('livePop').innerText = `${popVal} %`;
             document.getElementById('liveRain').innerText = `${data.rain.toFixed(1)} mm`;
@@ -2191,64 +2191,54 @@
                 const town = station.GeoInfo?.TownName || '';
                 const popVal = getPopForStation(county, town);
 
-                let customIcon;
-
-                if (['temp', 'pop', 'rain', 'wind', 'windGust'].includes(currentMapMode)) {
-                    let val, bgColor, labelName, unit;
-                    if (currentMapMode === 'rain') {
-                        val = data.rain;
-                        bgColor = getRainColor(val);
-                        labelName = '日雨量';
-                        unit = 'mm';
-                    } else if (currentMapMode === 'pop') {
-                        val = popVal;
-                        bgColor = getPopColor(val);
-                        labelName = '降雨機率';
-                        unit = '%';
-                    } else if (currentMapMode === 'temp') {
-                        val = data.temp;
-                        bgColor = getTempColor(val);
-                        labelName = '氣溫';
-                        unit = '°C';
-                    } else if (currentMapMode === 'wind') {
-                        val = data.windSpeed;
-                        bgColor = getWindColor(val);
-                        labelName = '風速';
-                        unit = 'm/s';
-                    } else {
-                        val = data.windGust;
-                        bgColor = getWindColor(val);
-                        labelName = '陣風';
-                        unit = 'm/s';
-                    }
-
-                    let displayVal = isNaN(val) ? '--' : val;
-                    let centerTextColor = '#fff';
-                    if (currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
-                    else if (currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
-                    else if (currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
-
-                    customIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: ${centerTextColor}; width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.8);">${displayVal}</div>`,
-                        iconSize: [22, 22],
-                        iconAnchor: [11, 11]
-                    });
+                let val, bgColor, displayVal;
+                if (currentMapMode === 'rain') {
+                    val = data.rain;
+                    bgColor = getRainColor(val);
+                    displayVal = Math.round(val);
+                } else if (currentMapMode === 'pop') {
+                    val = popVal;
+                    bgColor = getPopColor(val);
+                    displayVal = popVal;
+                } else if (currentMapMode === 'temp') {
+                    val = data.temp;
+                    bgColor = getTempColor(val);
+                    displayVal = isNaN(val) ? '--' : Math.round(val);
+                } else if (currentMapMode === 'wind') {
+                    val = data.windSpeed;
+                    bgColor = getWindColor(val);
+                    displayVal = Math.round(val);
+                } else {
+                    val = data.windGust;
+                    bgColor = getWindColor(val);
+                    displayVal = Math.round(val);
                 }
 
+                let centerTextColor = '#fff';
+                if (currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
+                else if (currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
+                else if (currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
+
+                const customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: ${centerTextColor}; width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">${displayVal}</div>`
+                });
+
                 const marker = L.marker([lat, lon], { icon: customIcon });
+
+                // 彈出視窗：已將雨量放在陣風的下方
                 const popupContent = `
                     <div class="popup-card">
-                        <h4>${station.StationName}</h4>
-                        <p><b>區域：</b> ${county}${town}</p>
-                        <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</p>
-                        <p><b>風向風速：</b> ${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)})</p>
-                        <p><b>陣風：</b> ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</p>
-                        <p><b>相對濕度：</b> ${data.humidity !== '--' ? data.humidity + '%' : '--'}</p>
-                        <p><b>日雨量：</b> ${data.rain.toFixed(1)} mm</p>
-                        <p><b>觀測時間：</b> ${formatObsTime(data.obsTime)}</p>
+                        <h4>${station.StationName} <span style="font-size: 12px; color: var(--popup-sub);">(${county}${town})</span></h4>
+                        <p>🌡️ 氣溫：<b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '-- °C'}</b></p>
+                        <p>💨 風速：<b>${getWindDirectionText(data.windDir)} ${Math.round(data.windSpeed)} m/s (${getWindLevel(data.windSpeed)})</b></p>
+                        <p>🌪️ 陣風：<b>${Math.round(data.windGust)} m/s (${getWindLevel(data.windGust)})</b></p>
+                        <p>🌧️ 雨量：<b>${data.rain.toFixed(1)} mm</b></p>
+                        <p>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></p>
+                        <p style="font-size: 11px; color: var(--popup-sub); margin-top: 4px;">觀測時間：${formatObsTime(data.obsTime)}</p>
                     </div>
                 `;
+
                 marker.bindPopup(popupContent);
                 currentMarkersLayer.addLayer(marker);
             });
