@@ -1,3 +1,7 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣天氣與地震觀測站 - CWA Pro Map</title>
     
@@ -743,6 +747,11 @@
                     <h3><i class="fas fa-globe-asia"></i> 全台天氣地圖</h3>
                     <span id="mapObsTimeTag" style="font-size: 12px; color: #38bdf8; font-weight: 600;">CWA 同步更新：--</span>
                 </div>
+                <!-- 新增：地圖使用說明提示列 -->
+                <div style="font-size: 12px; color: var(--text-muted); background: var(--action-bg); padding: 7px 12px; border-radius: 10px; border: 1px solid var(--action-border); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-info-circle" style="color: #38bdf8; font-size: 14px;"></i> 
+                    <span><b>操作提示：</b>點擊地圖上任意測站圓點即可彈出該站詳細氣象資訊，點擊後亦可切換回儀表板同步檢視！</span>
+                </div>
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
                     <button id="btnMapWx" onclick="switchMapMode('wx')">🌤️ 天氣狀況</button>
@@ -758,7 +767,7 @@
             </div>
         </div>
 
-        <!-- 各縣市預報面板 (新增) -->
+        <!-- 各縣市預報面板 -->
         <div id="countyForecastPanel" class="content-panel modern-dashboard">
             <div class="header">
                 <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
@@ -2230,41 +2239,46 @@
                         bgColor = getWindColor(val);
                         labelName = '風速';
                         unit = 'm/s';
-                    } else {
+                    } else if (currentMapMode === 'windGust') {
                         val = data.windGust;
                         bgColor = getWindColor(val);
                         labelName = '陣風';
                         unit = 'm/s';
                     }
 
-                    let displayVal = isNaN(val) ? '--' : val;
-                    let isEmoji = currentMapMode === 'wx';
-                    let centerTextColor = '#fff';
-                    if (!isEmoji && currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
-                    else if (!isEmoji && currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
-                    else if (!isEmoji && currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
+                    let displayHtml = '';
+                    if (currentMapMode === 'wx') {
+                        displayHtml = `<span style="font-size: 14px;">${val}</span>`;
+                    } else {
+                        displayHtml = `<span style="font-size: 11px; font-weight: 700; color: #fff;">${!isNaN(val) ? val.toFixed(1) : '--'}</span>`;
+                    }
 
                     customIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: ${isEmoji ? '14px' : '8px'}; font-weight: bold; color: ${centerTextColor}; width: ${isEmoji ? '28px' : '22px'}; height: ${isEmoji ? '28px' : '22px'}; margin-left: ${isEmoji ? '-6px' : '-3px'}; margin-top: ${isEmoji ? '-6px' : '-3px'};" title="${labelName}: ${unit}">${isEmoji ? val : (!isNaN(val) ? Math.round(val) : '--')}</div>`,
-                        iconSize: [isEmoji ? 28 : 22, isEmoji ? 28 : 22],
-                        iconAnchor: [isEmoji ? 14 : 11, isEmoji ? 14 : 11]
+                        className: 'custom-map-marker',
+                        html: `<div style="background:${bgColor}; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${displayHtml}</div>`,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14]
                     });
                 }
 
                 const marker = L.marker([lat, lon], { icon: customIcon });
-
+                
+                const weatherCond = determineWeatherCondition(data.rain, data.humidity, popVal);
                 marker.bindPopup(`
                     <div class="popup-card">
-                        <h4>${station.StationName}</h4>
-                        <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp + ' °C' : '--'}</p>
-                        <p><b>濕度：</b> ${data.humidity} %</p>
-                        <p><b>降雨機率：</b> ${popVal} %</p>
-                        <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
-                        <p><b>最大陣風：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
-                        <p><b>日雨量：</b> ${data.rain} mm</p>
+                        <h4>${station.StationName} <span style="font-size: 12px; color: #64748b;">(${county}${town})</span></h4>
+                        <p>🌡️ 氣溫：<b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</b></p>
+                        <p>🌤️ 天氣：<b>${weatherCond.title}</b></p>
+                        <p>🌧️ 降雨機率：<b>${popVal} %</b></p>
+                        <p>🌧️ 日雨量：<b>${data.rain.toFixed(1)} mm</b></p>
+                        <p>💨 風速/陣風：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s / 陣風 ${data.windGust.toFixed(1)} m/s</b></p>
+                        <p style="font-size: 11px; color: #0284c7; margin-top: 6px; border-top: 1px dashed #cbd5e1; padding-top: 4px;"><i class="fas fa-hand-pointer"></i> 提示：點擊測站即可同步至儀表板檢視詳情</p>
                     </div>
                 `);
+
+                marker.on('click', () => {
+                    selectStationById(station.StationId);
+                });
 
                 currentMarkersLayer.addLayer(marker);
             });
