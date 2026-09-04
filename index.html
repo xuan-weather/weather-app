@@ -2202,63 +2202,71 @@
                 const town = station.GeoInfo?.TownName || '';
                 const popVal = getPopForStation(county, town);
 
-                let val, bgColor, labelName, unit;
-                if (currentMapMode === 'rain') {
-                    val = data.rain;
-                    bgColor = getRainColor(val);
-                    labelName = '日雨量';
-                    unit = 'mm';
-                } else if (currentMapMode === 'pop') {
-                    val = popVal;
-                    bgColor = getPopColor(val);
-                    labelName = '降雨機率';
-                    unit = '%';
-                } else if (currentMapMode === 'temp') {
-                    val = data.temp;
-                    bgColor = getTempColor(val);
-                    labelName = '氣溫';
-                    unit = '°C';
-                } else if (currentMapMode === 'wx') {
-                    const wxInfo = forecastWxData[county] || { text: '晴', code: '1' };
-                    const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
-                    const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
-                    val = iconObj.icon;
-                    bgColor = 'rgba(15, 23, 42, 0.85)';
-                    labelName = '天氣狀況';
-                    unit = wxInfo.text;
-                } else if (currentMapMode === 'wind') {
-                    val = data.windSpeed;
-                    bgColor = getWindColor(val);
-                    labelName = '風速';
-                    unit = 'm/s';
-                } else {
-                    val = data.windGust;
-                    bgColor = getWindColor(val);
-                    labelName = '陣風';
-                    unit = 'm/s';
+                let customIcon;
+
+                if (['temp', 'wx', 'pop', 'rain', 'wind', 'windGust'].includes(currentMapMode)) {
+                    let val, bgColor, labelName, unit;
+                    if (currentMapMode === 'rain') {
+                        val = data.rain;
+                        bgColor = getRainColor(val);
+                        labelName = '日雨量';
+                        unit = 'mm';
+                    } else if (currentMapMode === 'pop') {
+                        val = popVal;
+                        bgColor = getPopColor(val);
+                        labelName = '降雨機率';
+                        unit = '%';
+                    } else if (currentMapMode === 'temp') {
+                        val = data.temp;
+                        bgColor = getTempColor(val);
+                        labelName = '氣溫';
+                        unit = '°C';
+                    } else if (currentMapMode === 'wx') {
+                        const wxInfo = forecastWxData[county] || { text: '晴', code: '1' };
+                        const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+                        const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
+                        val = iconObj.icon;
+                        bgColor = 'rgba(15, 23, 42, 0.85)';
+                        labelName = '天氣狀況';
+                        unit = wxInfo.text;
+                    } else if (currentMapMode === 'wind') {
+                        val = data.windSpeed;
+                        bgColor = getWindColor(val);
+                        labelName = '風速';
+                        unit = 'm/s';
+                    } else {
+                        val = data.windGust;
+                        bgColor = getWindColor(val);
+                        labelName = '陣風';
+                        unit = 'm/s';
+                    }
+
+                    let displayVal = isNaN(val) ? '--' : val;
+                    let isEmoji = currentMapMode === 'wx';
+                    let centerTextColor = '#fff';
+                    if (!isEmoji && currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
+                    else if (!isEmoji && currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
+                    else if (!isEmoji && currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
+
+                    customIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: ${isEmoji ? '14px' : '8px'}; font-weight: bold; color: ${centerTextColor}; width: ${isEmoji ? '28px' : '22px'}; height: ${isEmoji ? '28px' : '22px'}; margin-left: ${isEmoji ? '-6px' : '-3px'}; margin-top: ${isEmoji ? '-6px' : '-3px'};" title="${labelName}: ${unit}">${isEmoji ? val : (!isNaN(val) ? Math.round(val) : '--')}</div>`,
+                        iconSize: [isEmoji ? 28 : 22, isEmoji ? 28 : 22],
+                        iconAnchor: [isEmoji ? 14 : 11, isEmoji ? 14 : 11]
+                    });
                 }
 
-                let displayValStr = currentMapMode === 'wx' ? `${val} ${unit}` : (!isNaN(val) ? `${val.toFixed(1)} ${unit}` : `-- ${unit}`);
+                const marker = L.marker([lat, lon], { icon: customIcon });
 
-                const htmlIcon = L.divHtmlIcon ? L.divHtmlIcon({
-                    html: `<div style="background:${bgColor}; color:#fff; padding:3px 6px; border-radius:8px; font-size:11px; font-weight:700; white-space:nowrap; border:1px solid rgba(255,255,255,0.4); box-shadow:0 2px 6px rgba(0,0,0,0.3); text-align:center;">${station.StationName}<br><span style="font-size:10px; font-weight:normal;">${displayValStr}</span></div>`,
-                    className: ''
-                }) : L.divIcon({
-                    html: `<div style="background:${bgColor}; color:#fff; padding:3px 6px; border-radius:8px; font-size:11px; font-weight:700; white-space:nowrap; border:1px solid rgba(255,255,255,0.4); box-shadow:0 2px 6px rgba(0,0,0,0.3); text-align:center;">${station.StationName}<br><span style="font-size:10px; font-weight:normal;">${displayValStr}</span></div>`,
-                    className: '',
-                    iconSize: [60, 30]
-                });
-
-                const marker = L.marker([lat, lon], { icon: htmlIcon });
                 marker.bindPopup(`
                     <div class="popup-card">
                         <h4>${station.StationName}</h4>
-                        <p><b>行政區：</b>${county}${town}</p>
-                        <p><b>氣溫：</b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</p>
-                        <p><b>降雨量：</b>${data.rain.toFixed(1)} mm</p>
-                        <p><b>風向風速：</b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s</p>
-                        <p><b>陣風：</b>${data.windGust.toFixed(1)} m/s</p>
-                        <p><b>相對濕度：</b>${data.humidity !== '--' ? data.humidity + '%' : '--'}</p>
+                        <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp + ' °C' : '--'}</p>
+                        <p><b>濕度：</b> ${data.humidity} %</p>
+                        <p><b>降雨機率：</b> ${popVal} %</p>
+                        <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
+                        <p><b>最大陣風：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
+                        <p><b>日雨量：</b> ${data.rain} mm</p>
                     </div>
                 `);
 
@@ -2268,4 +2276,3 @@
     </script>
 </body>
 </html>
-```[cite: 1]
