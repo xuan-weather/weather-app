@@ -550,7 +550,7 @@
             display: inline-block;
         }
 
-        .popup-card { color: var(--popup-text); min-width: 160px; }
+        .popup-card { color: var(--popup-text); min-width: 180px; }
         .popup-card h4 { font-size: 16px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; color: var(--popup-text); }
         .popup-card p { font-size: 13px; margin: 4px 0; color: var(--popup-sub); }
 
@@ -2230,27 +2230,27 @@
 
                     customIcon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: ${centerTextColor}; width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.9);">${typeof displayVal === 'number' ? Math.round(displayVal) : displayVal}</div>`,
+                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: ${centerTextColor}; width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.8);">${displayVal}</div>`,
                         iconSize: [22, 22],
                         iconAnchor: [11, 11]
                     });
-
-                    const marker = L.marker([lat, lon], { icon: customIcon });
-                    
-                    const popupHtml = `
-                        <div class="popup-card">
-                            <h4>${station.StationName} <span style="font-size: 12px; color: var(--text-muted);">(${county}${town})</span></h4>
-                            <p><b>${labelName}：</b> ${displayVal} ${unit}</p>
-                            <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '-- °C'}</p>
-                            <p><b>降雨機率：</b> ${popVal} %</p>
-                            <p><b>日雨量：</b> ${data.rain.toFixed(1)} mm</p>
-                            <p><b>風向風速：</b> ${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s</p>
-                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">觀測時間：${formatObsTime(data.obsTime)}</p>
-                        </div>
-                    `;
-                    marker.bindPopup(popupHtml);
-                    currentMarkersLayer.addLayer(marker);
                 }
+
+                const marker = L.marker([lat, lon], { icon: customIcon });
+                const popupContent = `
+                    <div class="popup-card">
+                        <h4>${station.StationName}</h4>
+                        <p><b>區域：</b> ${county}${town}</p>
+                        <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</p>
+                        <p><b>風向風速：</b> ${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)})</p>
+                        <p><b>陣風：</b> ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</p>
+                        <p><b>相對濕度：</b> ${data.humidity !== '--' ? data.humidity + '%' : '--'}</p>
+                        <p><b>日雨量：</b> ${data.rain.toFixed(1)} mm</p>
+                        <p><b>觀測時間：</b> ${formatObsTime(data.obsTime)}</p>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                currentMarkersLayer.addLayer(marker);
             });
         }
     </script>
