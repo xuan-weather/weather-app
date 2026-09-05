@@ -1,0 +1,52 @@
+/* 主題變數定義 */
+        :root {
+            --bg-color: #090d16;
+            --text-color: #f1f5f9;
+            --panel-bg: rgba(15, 23, 42, 0.75);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --card-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            --card-border: rgba(255, 255, 255, 0.05);
+            --text-muted: #94a3b8;
+            --select-bg: rgba(30, 41, 59, 0.8);
+            --action-bg: rgba(255, 255, 255, 0.05);
+            --action-border: rgba(255, 255, 255, 0.1);
+            --tab-bg: rgba(255, 255, 255, 0.03);
+            --segment-bg: rgba(15, 23, 42, 0.6);
+            --popup-bg: #fff;
+            --popup-text: #0f172a;
+            --popup-sub: #334155;
+            --legend-bg: rgba(15, 23, 42, 0.88);
+            --legend-text: #f1f5f9;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --text-color: #0f172a;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(0, 0, 0, 0.08);
+            --card-bg: linear-gradient(145deg, rgba(241, 245, 249, 0.9), rgba(255, 255, 255, 0.95));
+            --card-border: rgba(0, 0, 0, 0.06);
+            --text-muted: #64748b;
+            --select-bg: rgba(241, 245, 249, 0.9);
+            --action-bg: rgba(0, 0, 0, 0.04);
+            --action-border: rgba(0, 0, 0, 0.1);
+            --tab-bg: rgba(0, 0, 0, 0.03);
+            --segment-bg: rgba(226, 232, 240, 0.7);
+            --popup-bg: #ffffff;
+            --popup-text: #0f172a;
+            --popup-sub: #334155;
+            --legend-bg: rgba(255, 255, 255, 0.9);
+            --legend-text: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            padding: 12px;
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        .container { max-width: 650px; margin: 0 auto; }
