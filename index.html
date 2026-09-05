@@ -458,7 +458,6 @@
             font-size: 10px;
             line-height: 1;
         }
-        /* 測站圓點標記調整 (與右圖一樣大小、無數值) */
         .weather-dot-badge {
             width: 12px;
             height: 12px;
@@ -504,7 +503,7 @@
         <!-- 頁籤導覽 -->
         <div class="page-tabs">
             <button id="tabDashboard" class="tab-btn active" onclick="switchMainPage('dashboard')">
-                <i class="fas fa-chart-line"></i> 即時概況
+                <i class="fas fa-chart-line"></i> 觀測儀表板
             </button>
             <button id="tabMap" class="tab-btn" onclick="switchMainPage('map')">
                 <i class="fas fa-map-marked-alt"></i> 全台地圖
@@ -513,10 +512,10 @@
                 <i class="fas fa-temperature-high"></i> 縣市預報
             </button>
             <button id="tabQuake" class="tab-btn" onclick="switchMainPage('quake')">
-                <i class="fas fa-house-chimney-crack"></i> 氣象地震
+                <i class="fas fa-house-chimney-crack"></i> 地震資訊
             </button>
             <button id="tabTyphoon" class="tab-btn" onclick="switchMainPage('typhoon')">
-                <i class="fas fa-hurricane"></i> 颱風動態
+                🌀 <i class="fas fa-hurricane"></i> 颱風資訊
             </button>
             <button class="tab-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切換主題" style="flex: 0 0 38px;">
                 <i class="fas fa-moon" id="themeIcon"></i>
@@ -566,17 +565,17 @@
             </div>
                          
             <div class="segment-control" id="stationTypeToggle">
-                <button class="segment-btn active" data-type="normal" onclick="setStationType('normal')">一般測站</button>
-                <button class="segment-btn" data-type="freeway" onclick="setStationType('freeway')">國道測站</button>
+                <button class="segment-btn active" data-type="normal" onclick="setStationType('normal')">🏙️ 鄉鎮市區站</button>
+                <button class="segment-btn" data-type="freeway" onclick="setStationType('freeway')">🚗 國道觀測站</button>
             </div>
             <div class="controls-grid">
                 <div class="control-group">
-                    <label>選擇縣市</label>
+                    <label><i class="fas fa-map"></i> 選擇縣市</label>
                     <select class="select-box" id="citySelect" onchange="onCityChange()">
                     </select>
                 </div>
                 <div class="control-group">
-                    <label>選擇測站</label>
+                    <label><i class="fas fa-broadcast-tower"></i> 選擇測站</label>
                     <select class="select-box" id="stationSelect" onchange="onStationChange()">
                     </select>
                 </div>
@@ -592,27 +591,27 @@
             </div>
             <div class="meta-info-bar">
                 <span id="currentStationTag">載入中...</span>
-                <span id="obsTimeTag" class="obs-time-tag">--:--</span>
+                <span id="obsTimeTag" class="obs-time-tag">觀測時間：--:--</span>
             </div>
             <div class="realtime-info-box">
                 <div class="info-card-item">
-                    <span>氣溫</span>
+                    <span>🌡️ 當前氣溫</span>
                     <b id="liveTemp">-- °C</b>
                 </div>
                 <div class="info-card-item">
-                    <span>風向 / 風速</span>
+                    <span>💨 風向/風力</span>
                     <b id="liveWind">--</b>
                 </div>
                 <div class="info-card-item">
-                    <span>相對濕度</span>
+                    <span>💧 相對濕度</span>
                     <b id="liveHumidity">-- %</b>
                 </div>
                 <div class="info-card-item">
-                    <span>降雨機率 (PoP)</span>
+                    <span>📈 降雨機率 (PoP)</span>
                     <b id="livePop" style="color: #38bdf8;">-- %</b>
                 </div>
                 <div class="info-card-item" style="grid-column: span 2;">
-                    <span>日雨量</span>
+                    <span>🌧️ 日累積雨量</span>
                     <b id="liveRain" style="color: #38bdf8;">-- mm</b>
                 </div>
             </div>
@@ -622,10 +621,10 @@
                     <i class="fas fa-trophy" style="color: #f59e0b;"></i> 全台氣象排行榜 Top 10
                 </div>
                 <div class="segment-control" id="rankingTypeToggle" style="margin-bottom: 12px; flex-wrap: nowrap; overflow-x: auto;">
-                    <button class="segment-btn active" id="btnRankRain" onclick="switchRankingTab('rain')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">雨量排行</button>
-                    <button class="segment-btn" id="btnRankTemp" onclick="switchRankingTab('temp')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">高溫排行</button>
-                    <button class="segment-btn" id="btnRankLowTemp" onclick="switchRankingTab('lowTemp')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">低溫排行</button>
-                    <button class="segment-btn" id="btnRankWindGust" onclick="switchRankingTab('windGust')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">陣風排行</button>
+                    <button class="segment-btn active" id="btnRankRain" onclick="switchRankingTab('rain')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">🌧️ 雨量排行</button>
+                    <button class="segment-btn" id="btnRankTemp" onclick="switchRankingTab('temp')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">🌡️ 高溫排行</button>
+                    <button class="segment-btn" id="btnRankLowTemp" onclick="switchRankingTab('lowTemp')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">❄️ 低溫排行</button>
+                    <button class="segment-btn" id="btnRankWindGust" onclick="switchRankingTab('windGust')" style="white-space: nowrap; font-size: 11px; padding: 8px 4px;">💨 陣風排行</button>
                 </div>
                 <div id="rankingCardsContainer" class="ranking-cards-grid">
                     <div class="my-location-status" style="grid-column: span 2;">載入中...</div>
@@ -649,11 +648,11 @@
                     <span id="mapObsTimeTag" style="font-size: 12px; color: #38bdf8; font-weight: 600;">CWA 觀測時間 --</span>
                 </div>
                 <div class="map-mode-btn-group">
-                    <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">氣溫</button>
-                    <button id="btnMapPop" onclick="switchMapMode('pop')">降雨機率</button>
-                    <button id="btnMapRain" onclick="switchMapMode('rain')">日雨量</button>
-                    <button id="btnMapWind" onclick="switchMapMode('wind')">風速</button>
-                    <button id="btnMapWindGust" onclick="switchMapMode('windGust')">陣風</button>
+                    <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
+                    <button id="btnMapPop" onclick="switchMapMode('pop')">📈 降雨機率</button>
+                    <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
+                    <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
+                    <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
                 </div>
             </div>
                          
@@ -707,7 +706,7 @@
         <div id="typhoonPanel" class="content-panel modern-dashboard">
             <div class="header">
                 <div class="header-title">
-                    <i class="fas fa-hurricane" style="color: #06b6d4;"></i>
+                    🌀 <i class="fas fa-hurricane" style="color: #06b6d4;"></i>
                     <h2>颱風動態消息</h2>
                 </div>
                 <div class="header-actions">
@@ -733,12 +732,12 @@
         let map = null;
         let mapInitialized = false;
         let currentMapMode = 'temp';
-         let currentMarkersLayer = L.layerGroup();
+        let currentMarkersLayer = L.layerGroup();
         let legendControl = null;
         let weatherStationData = [];
         let warningData = [];
         let forecastPopData = {};
-         let forecastWxData = {};
+        let forecastWxData = {};
         let forecastMinTData = {};
         let forecastMaxTData = {};
         let earthquakeData = [];
@@ -901,7 +900,7 @@
         }
         function determineWeatherCondition(rain, humidity, pop = 0) {
             if (rain > 0.5 || pop >= 70) {
-                return { icon: "🌧️", title: "降雨天氣", desc: "請注意降雨並攜帶雨具" };
+                return { icon: "🌧️", title: "降雨天氣", desc: "目前有雨或降雨機率高，請攜帶雨具" };
             } else if (pop >= 30 || (humidity !== '--' && humidity > 80)) {
                 return { icon: "☁️", title: "陰天時雨", desc: "雲量較多，偶有局部降雨" };
             } else if (humidity !== '--' && humidity > 65) {
@@ -927,7 +926,7 @@
                 ]);
                 const list1 = res1.records?.Station || [];
                 const list2 = res2.records?.Station || [];
-                                 const combined = [...list1, ...list2];
+                const combined = [...list1, ...list2];
                 const seenIds = new Set();
                 const seenNames = new Set();
                 weatherStationData = [];
@@ -1372,7 +1371,7 @@
                 position => {
                     const userLat = position.coords.latitude;
                     const userLon = position.coords.longitude;
-                                         let closestStation = null;
+                    let closestStation = null;
                     let minDistance = Infinity;
                     weatherStationData.forEach(station => {
                         const lat = parseFloat(station.GeoInfo?.Coordinates?.[1]?.StationLatitude || station.Latitude);
@@ -1400,7 +1399,7 @@
                                             ${closestStation.StationName} <span style="font-size: 12px; color: #38bdf8; font-weight: normal;">(${county}${town})</span>
                                         </div>
                                         <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                                            距離約 ${minDistance.toFixed(1)} 公里 • 觀測時間 ${formatObsTime(data.obsTime)}
+                                            距離約 ${minDistance.toFixed(1)} 公里 • 觀測時間：${formatObsTime(data.obsTime)}
                                         </div>
                                     </div>
                                 </div>
@@ -1414,9 +1413,9 @@
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--panel-border); padding-top: 8px;">
-                                <div>風向風速：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
-                                <div>相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
-                                <div style="grid-column: span 2;">日雨量：<b>${data.rain.toFixed(1)} mm</b></div>
+                                <div>💨 風向/風力：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
+                                <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
+                                <div style="grid-column: span 2;">🌧️ 日累積雨量：<b>${data.rain.toFixed(1)} mm</b></div>
                             </div>
                         `;
                     } else {
@@ -1447,7 +1446,7 @@
             const sortedAndFilteredCities = TAIWAN_REGIONS_ORDER.filter(city => {
                 const cityStations = cityStationMapping[city];
                 if (!cityStations || cityStations.length === 0) return false;
-                                 if (currentStationType === 'freeway') {
+                if (currentStationType === 'freeway') {
                     return cityStations.some(s => isFreewayStation(s.StationName));
                 } else {
                     return cityStations.some(s => !isFreewayStation(s.StationName));
@@ -1541,7 +1540,7 @@
                 updateDashboardWithStation(targetStation);
             } else {
                 document.getElementById('currentStationTag').innerText = `選擇測站`;
-                document.getElementById('obsTimeTag').innerText = ` --:--`;
+                document.getElementById('obsTimeTag').innerText = `觀測時間：--:--`;
                 document.getElementById('liveTemp').innerText = '-- °C';
                 document.getElementById('liveWind').innerText = '--';
                 document.getElementById('liveHumidity').innerText = '-- %';
@@ -1561,7 +1560,7 @@
             document.getElementById('weatherStatusTitle').innerText = weatherCond.title;
             document.getElementById('weatherStatusDesc').innerText = weatherCond.desc;
             document.getElementById('currentStationTag').innerText = `觀測站：${targetStation.StationName}${currentStationType === 'normal' ? townName : ''}`;
-            document.getElementById('obsTimeTag').innerText = `觀測時間 ${formatObsTime(data.obsTime)}`;
+            document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(data.obsTime)}`;
             document.getElementById('liveTemp').innerText = !isNaN(data.temp) ? `${data.temp.toFixed(1)} °C` : '-- °C';
             document.getElementById('liveWind').innerText = `${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})`;
             document.getElementById('liveHumidity').innerText = data.humidity !== '--' ? `${data.humidity} %` : '-- %';
@@ -1593,7 +1592,7 @@
                 const d = new Date(baseTime - i * 60 * 60 * 1000);
                 fullDateLabels.push(formatDateStr(d));
                 xAxisLabels.push(`${String(d.getHours()).padStart(2,'0')}:00`);
-                                 let simulatedTemp = currentTemp + Math.sin(i / 3) * 1.5;
+                let simulatedTemp = currentTemp + Math.sin(i / 3) * 1.5;
                 temps.push(Number(simulatedTemp.toFixed(1)));
             }
             document.getElementById('chartTimeSubtitle').innerText = `${fullDateLabels[0]} ~ ${fullDateLabels[fullDateLabels.length - 1]}`;
@@ -1646,7 +1645,7 @@
         function initMap() {
             if (mapInitialized) return;
             map = L.map('map', {
-                 zoomControl: false,
+                zoomControl: false,
                 fullscreenControl: true,
                 fullscreenControlOptions: {
                     position: 'bottomright'
@@ -1786,31 +1785,26 @@
                 const county = (station.GeoInfo?.CountyName || '').replace('台', '臺');
                 const town = station.GeoInfo?.TownName || '';
                 const popVal = getPopForStation(county, town);
-                let val, bgColor, labelName, unit;
+                let val, bgColor, unit;
                 if (currentMapMode === 'rain') {
                     val = data.rain;
                     bgColor = getRainColor(val);
-                    labelName = '日雨量';
                     unit = 'mm';
                 } else if (currentMapMode === 'pop') {
                     val = popVal;
                     bgColor = getPopColor(val);
-                    labelName = '降雨機率';
                     unit = '%';
                 } else if (currentMapMode === 'temp') {
                     val = data.temp;
                     bgColor = getTempColor(val);
-                    labelName = '氣溫';
                     unit = '°C';
                 } else if (currentMapMode === 'wind') {
                     val = data.windSpeed;
                     bgColor = getWindColor(val);
-                    labelName = '風速';
                     unit = 'm/s';
                 } else if (currentMapMode === 'windGust') {
                     val = data.windGust;
                     bgColor = getWindColor(val);
-                    labelName = '陣風';
                     unit = 'm/s';
                 }
                 if (isNaN(val)) return;
@@ -1825,10 +1819,12 @@
                 marker.bindPopup(`
                     <div class="popup-card">
                         <h4>${station.StationName} <span style="font-size:12px; font-weight:normal;">(${county}${town})</span></h4>
-                        <p>${labelName} <b>${val} ${unit}</b></p>
-                        <p>氣溫 <b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</b></p>
-                        <p>雨量 <b>${data.rain.toFixed(1)} mm</b></p>
-                        <p>風向風速 <b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s</b></p>
+                        <p>日累積雨量：<b>${data.rain.toFixed(1)} mm</b></p>
+                        <p>當前氣溫：<b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</b></p>
+                        <p>濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '--'}</b></p>
+                        <p>降雨機率：<b>${popVal} %</b></p>
+                        <p>平均風速：<b>${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)})</b></p>
+                        <p>最大陣風：<b>${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></p>
                     </div>
                 `);
                 currentMarkersLayer.addLayer(marker);
