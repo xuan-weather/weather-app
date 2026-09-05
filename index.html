@@ -458,22 +458,17 @@
             font-size: 10px;
             line-height: 1;
         }
-        /* 測站圓點標記放大調整 */
+        /* 測站圓點標記調整 (與右圖一樣大小、無數值) */
         .weather-dot-badge {
-            width: 24px;
-            height: 24px;
+            width: 12px;
+            height: 12px;
             padding: 0;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 1px 1px rgba(0,0,0,0.8);
-            white-space: nowrap;
         }
         .popup-card { color: var(--popup-text); min-width: 160px; }
         .popup-card h4 { font-size: 16px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; color: var(--popup-text); }
@@ -650,7 +645,7 @@
         <div id="mapPanel" class="content-panel map-section">
             <div class="map-header">
                 <div class="map-title-row">
-                    <h3><i class="fas fa-globe-asia"></i> 全台氣象觀測地圖</h3>
+                    <h3><i class="fas fa-globe-asia"></i> 天氣即時觀測</h3>
                     <span id="mapObsTimeTag" style="font-size: 12px; color: #38bdf8; font-weight: 600;">CWA 觀測時間 --</span>
                 </div>
                 <div class="map-mode-btn-group">
@@ -1819,13 +1814,12 @@
                     unit = 'm/s';
                 }
                 if (isNaN(val)) return;
-                const intVal = Math.round(val);
-                const html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}">${intVal}</div>`;
+                const html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}"></div>`;
                 const icon = L.divIcon({
                     className: '',
                     html: html,
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
                 });
                 const marker = L.marker([lat, lon], { icon: icon });
                 marker.bindPopup(`
