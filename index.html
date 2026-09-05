@@ -106,6 +106,21 @@
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
         
+        /* 新增：即時時鐘樣式 */
+        .live-clock-bar {
+            background: rgba(6, 182, 212, 0.08);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
         .alarm-indicator {
             width: 14px;
             height: 14px;
@@ -535,6 +550,13 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- 新增：即時年月日與臺灣標準時間列 -->
+            <div class="live-clock-bar">
+                <div><i class="fas fa-calendar-alt"></i> <span id="liveDateText">----年--月--日</span></div>
+                <div><i class="fas fa-clock"></i> 臺灣標準時間 <span id="liveTimeText">--:--:--</span></div>
+            </div>
+
             <!-- 我的位置 Widget -->
             <div class="my-location-widget">
                 <div class="my-location-header">
@@ -755,6 +777,11 @@
         window.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('cwa_theme') || 'dark';
             setTheme(savedTheme);
+            
+            // 啟動即時時鐘更新
+            initTaiwanClock();
+            setInterval(initTaiwanClock, 1000);
+
             fetchAllStationData(false, () => {
                 initUserLocationWeather();
             });
@@ -764,6 +791,34 @@
                 fetchEarthquakeData(false);
             }, 30000);
         });
+
+        // 新增：更新臺灣標準時間與年月日函式
+        function initTaiwanClock() {
+            const now = new Date();
+            // 轉換為臺灣時間 (UTC+8)
+            const optionsDate = { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' };
+            const optionsTime = { timeZone: 'Asia/Taipei', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            
+            const dateFormatter = new Intl.DateTimeFormat('zh-TW', optionsDate);
+            const timeFormatter = new Intl.DateTimeFormat('zh-TW', optionsTime);
+
+            const parts = dateFormatter.formatToParts(now);
+            let year = '', month = '', day = '';
+            parts.forEach(p => {
+                if (p.type === 'year') year = p.value;
+                if (p.type === 'month') month = p.value;
+                if (p.type === 'day') day = p.value;
+            });
+
+            const dateStr = `${year}年${month}月${day}日`;
+            const timeStr = timeFormatter.format(now);
+
+            const dateEl = document.getElementById('liveDateText');
+            const timeEl = document.getElementById('liveTimeText');
+            if (dateEl) dateEl.innerText = dateStr;
+            if (timeEl) timeEl.innerText = timeStr;
+        }
+
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -902,11 +957,11 @@
             if (rain > 0.5 || pop >= 70) {
                 return { icon: "🌧️", title: "降雨天氣", desc: "目前有雨或降雨機率高，請攜帶雨具" };
             } else if (pop >= 30 || (humidity !== '--' && humidity > 80)) {
-                return { icon: "☁️", title: "陰天時雨", desc: "雲量較多，偶有局部降雨" };
+                return { icon: "☁️", title: "陰天時雨", desc: "目前有雨或降雨機率高，請攜帶雨具" };
             } else if (humidity !== '--' && humidity > 65) {
-                return { icon: "⛅", title: "多雲時晴", desc: "天氣穩定，適合戶外活動" };
+                return { icon: "⛅", title: "多雲時晴", desc: "目前天氣晴朗，記得防曬多補充水分" };
             } else {
-                return { icon: "☀️", title: "晴朗穩定", desc: "陽光普照，氣溫舒適" };
+                return { icon: "☀️", title: "晴朗穩定", desc: "目前天氣晴朗，記得防曬多補充水分" };
             }
         }
         async function fetchAllStationData(isManualRefresh = false, callback = null) {
@@ -1416,6 +1471,7 @@
                                 <div>💨 風向/風力：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
                                 <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
                                 <div style="grid-column: span 2;">🌧️ 日累積雨量：<b>${data.rain.toFixed(1)} mm</b></div>
+                                <div style="grid-column: span 2; color: #38bdf8; font-weight: 600; margin-top: 4px;">💡 ${weatherCond.desc}</div>
                             </div>
                         `;
                     } else {
