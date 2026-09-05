@@ -481,18 +481,18 @@
             line-height: 1;
         }
 
-        /* 測站地圖圓點改為固定的正圓形標籤樣式 */
+        /* 測站地圖圓點改為縮小後的高對比氣象標籤樣式 */
         .weather-dot-badge {
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
             padding: 0;
             border-radius: 50%;
-            border: 1.5px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            border: 1.2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 700;
             color: #ffffff;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
@@ -1921,6 +1921,7 @@
             }
         }
 
+        /* 氣象署官方標準色階對應函式 */
         function getRainColor(rain) {
             if (rain >= 300) return '#FF66FF';
             if (rain >= 200) return '#660066';
@@ -2016,14 +2017,13 @@
 
                 if (isNaN(val)) return;
 
-                // 數值四捨五入取整數顯示於正圓形測站標籤內
                 const intVal = Math.round(val);
                 const html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}">${intVal}</div>`;
                 const icon = L.divIcon({
                     className: '',
                     html: html,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
                 });
 
                 const marker = L.marker([lat, lon], { icon: icon });
