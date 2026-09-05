@@ -795,7 +795,6 @@
         // 更新臺灣標準時間與年月日、星期幾函式
         function initTaiwanClock() {
             const now = new Date();
-            // 轉換為臺灣時間 (UTC+8)，加入 weekday: 'long' 取得星期幾
             const optionsDate = { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' };
             const optionsTime = { timeZone: 'Asia/Taipei', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
             
@@ -954,17 +953,7 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
-        function determineWeatherCondition(rain, humidity, pop = 0) {
-            if (rain > 0.5 || pop >= 70) {
-                return { icon: "🌧️", title: "降雨天氣", desc: "目前有雨或降雨機率高，請攜帶雨具" };
-            } else if (pop >= 30 || (humidity !== '--' && humidity > 80)) {
-                return { icon: "☁️", title: "陰天時雨", desc: "目前有雨或降雨機率高，請攜帶雨具" };
-            } else if (humidity !== '--' && humidity > 65) {
-                return { icon: "⛅", title: "多雲時晴", desc: "目前天氣晴朗，記得防曬多補充水分" };
-            } else {
-                return { icon: "☀️", title: "晴朗穩定", desc: "目前天氣晴朗，記得防曬多補充水分" };
-            }
-        }
+
         async function fetchAllStationData(isManualRefresh = false, callback = null) {
             const btn = document.getElementById('refreshBtn');
             if (btn && isManualRefresh) btn.classList.add('spinning');
@@ -1445,10 +1434,9 @@
                         const county = (closestStation.GeoInfo?.CountyName || '').replace('台', '臺');
                         const town = closestStation.GeoInfo?.TownName || '';
                         const popVal = getPopForStation(county, town);
-                        const weatherCond = determineWeatherCondition(data.rain, data.humidity, popVal);
                         
                         const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
-                        const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: weatherCond.title, code: '1' };
+                        const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: '晴時多雲', code: '1' };
                         const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
 
                         container.innerHTML = `
@@ -1477,7 +1465,7 @@
                                 <div>💨 風向/風力：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)}) / 陣風 ${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></div>
                                 <div>💧 相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '-- %'}</b></div>
                                 <div style="grid-column: span 2;">🌧️ 日累積雨量：<b>${data.rain.toFixed(1)} mm</b></div>
-                                <div style="grid-column: span 2; color: #38bdf8; font-weight: 600; margin-top: 4px;">💡 天氣狀況：${wxInfo.text}</div>
+                                <div style="grid-column: span 2; color: #38bdf8; font-weight: 600; margin-top: 4px;">💡 氣象署天氣概況：${wxInfo.text}</div>
                             </div>
                         `;
                     } else {
@@ -1616,11 +1604,15 @@
             const town = targetStation.GeoInfo?.TownName || '';
             const townName = town ? ` (${town})` : '';
             const popVal = getPopForStation(county, town);
-            const weatherCond = determineWeatherCondition(data.rain, data.humidity, popVal);
+            
+            // 使用氣象署預報的 Wx 狀況與圖示，確保與上方及全台預報完全一致
+            const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+            const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: '晴時多雲', code: '1' };
+            const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
                          
-            document.getElementById('weatherStatusIcon').innerText = weatherCond.icon;
-            document.getElementById('weatherStatusTitle').innerText = weatherCond.title;
-            document.getElementById('weatherStatusDesc').innerText = weatherCond.desc;
+            document.getElementById('weatherStatusIcon').innerText = iconObj.icon;
+            document.getElementById('weatherStatusTitle').innerText = wxInfo.text;
+            document.getElementById('weatherStatusDesc').innerText = `氣象署預報：${wxInfo.text}，降雨機率 ${popVal}%`;
             document.getElementById('currentStationTag').innerText = `觀測站：${targetStation.StationName}${currentStationType === 'normal' ? townName : ''}`;
             document.getElementById('obsTimeTag').innerText = `觀測時間：${formatObsTime(data.obsTime)}`;
             document.getElementById('liveTemp').innerText = !isNaN(data.temp) ? `${data.temp.toFixed(1)} °C` : '-- °C';
@@ -1895,4 +1887,3 @@
     </script>
 </body>
 </html>
-```[cite: 2]
