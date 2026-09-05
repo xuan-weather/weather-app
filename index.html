@@ -97,15 +97,6 @@
             color: #fff;
             box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
         }
-        .tab-btn.quake-alert-tab {
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-        .tab-btn.quake-alert-tab.active {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        }
 
         .content-panel { display: none; }
         .content-panel.active { display: block; }
@@ -163,57 +154,6 @@
         .action-btn.spinning i { animation: spin 1s linear infinite; }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .quake-flash-card {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(15, 23, 42, 0.9));
-            border: 2px solid rgba(239, 68, 68, 0.6);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);
-            position: relative;
-            overflow: hidden;
-        }
-        .quake-flash-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-            border-bottom: 1px solid rgba(239, 68, 68, 0.3);
-            padding-bottom: 10px;
-        }
-        .quake-live-badge {
-            background: #ef4444;
-            color: white;
-            font-weight: 800;
-            font-size: 13px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            animation: pulse-red 1.5s infinite;
-        }
-        @keyframes pulse-red {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.05); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .quake-p-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 14px;
-        }
-        .quake-p-box {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 12px;
-            text-align: center;
-        }
-        .quake-p-box span { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; }
-        .quake-p-box b { font-size: 18px; color: #f87171; font-weight: 800; }
 
         .warning-alert-box {
             background: rgba(239, 68, 68, 0.12);
@@ -541,13 +481,22 @@
             line-height: 1;
         }
 
+        /* 測站地圖圓點改為固定的正圓形標籤樣式 */
         .weather-dot-badge {
-            width: 16px;
-            height: 16px;
+            width: 28px;
+            height: 28px;
+            padding: 0;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            display: inline-block;
+            border: 1.5px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            white-space: nowrap;
         }
 
         .popup-card { color: var(--popup-text); min-width: 160px; }
@@ -593,12 +542,6 @@
             </button>
             <button id="tabCountyForecast" class="tab-btn" onclick="switchMainPage('countyForecast')">
                 <i class="fas fa-temperature-high"></i> 各縣市預報
-            </button>
-            <button id="tabWeatherState" class="tab-btn" onclick="switchMainPage('weatherState')">
-                <i class="fas fa-cloud-sun"></i> 各地天氣狀況
-            </button>
-            <button id="tabQuakeAlert" class="tab-btn quake-alert-tab" onclick="switchMainPage('quakeAlert')">
-                <i class="fas fa-wave-square"></i> 地震速報
             </button>
             <button id="tabQuake" class="tab-btn" onclick="switchMainPage('quake')">
                 <i class="fas fa-house-chimney-crack"></i> 地震資訊
@@ -749,7 +692,6 @@
                 </div>
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
-                    <button id="btnMapWx" onclick="switchMapMode('wx')">🌤️ 天氣狀況</button>
                     <button id="btnMapPop" onclick="switchMapMode('pop')">☂️ 降雨機率</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
@@ -762,7 +704,7 @@
             </div>
         </div>
 
-        <!-- 各縣市預報面板 (新增) -->
+        <!-- 各縣市預報面板 -->
         <div id="countyForecastPanel" class="content-panel modern-dashboard">
             <div class="header">
                 <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
@@ -782,68 +724,6 @@
             </div>
             <div id="countyForecastGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 520px; overflow-y: auto; padding-right: 4px;">
                 <div class="my-location-status" style="grid-column: span 2;"><i class="fas fa-spinner fa-spin"></i> 正在載入氣象署各縣市預報資料...</div>
-            </div>
-        </div>
-
-        <!-- 各地天氣狀況面板 -->
-        <div id="weatherStatePanel" class="content-panel modern-dashboard">
-            <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 8px 12px; margin-bottom: 14px; overflow: hidden;">
-                <marquee behavior="scroll" direction="left" scrollamount="4" style="color: #38bdf8; font-size: 13px; font-weight: 600;">
-                    <i class="fas fa-bullhorn"></i> 歡迎使用全台各地天氣狀況概覽！隨時掌握各縣市最新天氣型態、降雨機率與即時動態，出門請多加留意氣象變化！
-                </marquee>
-            </div>
-
-            <div class="header">
-                <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
-                    <i class="fas fa-cloud-moon-rain" style="color: #38bdf8; flex-shrink: 0;"></i>
-                    <h2 style="white-space: nowrap; font-size: 1.15rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; width: 100%;">
-                        全台各地天氣狀況概覽
-                    </h2>
-                </div>
-                <div class="header-actions" style="flex-shrink: 0; margin-left: 10px;">
-                    <button class="action-btn" onclick="fetchAllStationData(true)">
-                        <i class="fas fa-sync-alt"></i> 刷新
-                    </button>
-                </div>
-            </div>
-            <div class="section-divider-title">
-                <i class="fas fa-cloud-sun"></i> 氣象署各縣市天氣型態與圖示 (晴天、多雲、雨天、雷雨)
-            </div>
-            <div id="weatherStateGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; max-height: 520px; overflow-y: auto; padding-right: 4px;">
-                <div class="my-location-status" style="grid-column: span 2;"><i class="fas fa-spinner fa-spin"></i> 正在載入氣象署各地天氣預報資料...</div>
-            </div>
-        </div>
-
-        <!-- 地震速報面板 -->
-        <div id="quakeAlertPanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
-                    <i class="fas fa-wave-square" style="color: #ef4444;"></i>
-                    <h2>地牛 Wake Up! 即時地震速報</h2>
-                </div>
-                <div class="header-actions">
-                    <button class="action-btn" onclick="fetchEarthquakeData(true)">
-                        <i class="fas fa-sync-alt"></i> 重新偵測
-                    </button>
-                </div>
-            </div>
-            
-            <div class="section-divider-title">
-                <i class="fas fa-broadcast-tower"></i> 最近一次有感地震速報
-            </div>
-
-            <div id="quakeAlertLiveContainer">
-                <div class="my-location-status">
-                    <i class="fas fa-spinner fa-spin"></i> 正在連線氣象署地震速報系統...
-                </div>
-            </div>
-
-            <div class="section-divider-title" style="margin-top: 20px;">
-                <i class="fas fa-shield-alt"></i> 避難防災指引
-            </div>
-            <div style="background: rgba(0,0,0,0.2); border-radius: 14px; padding: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                1. <b>地震發生時：</b>保持鎮靜，就地避難「趴下-掩護-穩住」。<br>
-                2. <b>搖晃停止後：</b>檢查瓦斯、水電開關，留意餘震發生，避免搭乘電梯。
             </div>
         </div>
 
@@ -964,16 +844,12 @@
             document.getElementById('tabDashboard').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('tabMap').classList.toggle('active', pageId === 'map');
             document.getElementById('tabCountyForecast').classList.toggle('active', pageId === 'countyForecast');
-            document.getElementById('tabWeatherState').classList.toggle('active', pageId === 'weatherState');
-            document.getElementById('tabQuakeAlert').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('tabQuake').classList.toggle('active', pageId === 'quake');
             document.getElementById('tabTyphoon').classList.toggle('active', pageId === 'typhoon');
             
             document.getElementById('dashboardPanel').classList.toggle('active', pageId === 'dashboard');
             document.getElementById('mapPanel').classList.toggle('active', pageId === 'map');
             document.getElementById('countyForecastPanel').classList.toggle('active', pageId === 'countyForecast');
-            document.getElementById('weatherStatePanel').classList.toggle('active', pageId === 'weatherState');
-            document.getElementById('quakeAlertPanel').classList.toggle('active', pageId === 'quakeAlert');
             document.getElementById('quakePanel').classList.toggle('active', pageId === 'quake');
             document.getElementById('typhoonPanel').classList.toggle('active', pageId === 'typhoon');
 
@@ -1219,7 +1095,6 @@
                         renderCurrentStationData();
                     }
                     renderRankings();
-                    renderWeatherStateGrid();
                     renderCountyForecastGrid();
                     if (mapInitialized) renderMapMarkers();
                 }
@@ -1255,30 +1130,6 @@
                 return { icon: '⛈️' };
             }
             return { icon: '🌤️' };
-        }
-
-        function renderWeatherStateGrid() {
-            const container = document.getElementById('weatherStateGridContainer');
-            if (!container) return;
-
-            let html = '';
-            const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
-
-            TAIWAN_REGIONS_ORDER.forEach(county => {
-                const wxInfo = forecastWxData[county] || { text: '--', code: '1' };
-                const pop = forecastPopData[county] !== undefined ? forecastPopData[county] : '--';
-                const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
-
-                html += `
-                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; transition: all 0.2s;" class="ranking-card">
-                        <div style="font-size: 14px; font-weight: 700; color: var(--text-color);">${county}</div>
-                        <div style="font-size: 34px; margin: 4px 0;" title="${wxInfo.text}">${iconObj.icon}</div>
-                        <div style="font-size: 12px; font-weight: 600; color: #38bdf8; min-height: 28px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">${wxInfo.text}</div>
-                        <div style="font-size: 11px; color: var(--text-muted);">降雨機率: ${pop}%</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
         }
 
         function renderCountyForecastGrid() {
@@ -1471,7 +1322,6 @@
             const btn = document.getElementById('refreshQuakeBtn');
             if (btn && isManualRefresh) btn.classList.add('spinning');
             const container = document.getElementById('quakeListContainer');
-            const alertContainer = document.getElementById('quakeAlertLiveContainer');
 
             const nonce = Date.now();
             const majorEqUrl = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
@@ -1497,52 +1347,6 @@
                 window.quakeDataList = earthquakeData;
 
                 if (earthquakeData.length > 0) {
-                    const latestEq = earthquakeData[0];
-                    const info = latestEq.EarthquakeInfo || {};
-                    const originTime = info.OriginTime || '--';
-                    const magnitude = info.EarthquakeMagnitude?.MagnitudeValue || '--';
-                    const depth = info.FocalDepth || '--';
-                    const location = info.Epicenter?.Location || '台灣地區';
-                    const reportImage = latestEq.ReportImageURI || '';
-                    
-                    let intensityListHtml = '';
-                    const shakeAreas = info.Intensity?.ShakingArea || [];
-                    if (shakeAreas.length > 0) {
-                        intensityListHtml = `<div style="margin-top: 12px; font-size: 13px;"><b>各地最大震度：</b><div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">`;
-                        shakeAreas.forEach(area => {
-                            intensityListHtml += `<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); padding: 3px 8px; border-radius: 8px; font-size: 12px;">${area.CountyName}: <b>${area.AreaIntensity}</b></span>`;
-                        });
-                        intensityListHtml += `</div></div>`;
-                    }
-
-                    if (alertContainer) {
-                        alertContainer.innerHTML = `
-                            <div class="quake-flash-card">
-                                <div class="quake-flash-header">
-                                    <div class="quake-live-badge">
-                                        <i class="fas fa-bell"></i> 氣象署即時速報
-                                    </div>
-                                    <div style="font-size: 12px; color: var(--text-muted);">${originTime}</div>
-                                </div>
-                                <div style="font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 8px;">
-                                    ${location}
-                                </div>
-                                <div class="quake-p-grid">
-                                    <div class="quake-p-box">
-                                        <span>地震規模 (M)</span>
-                                        <b>${magnitude}</b>
-                                    </div>
-                                    <div class="quake-p-box">
-                                        <span>地震深度</span>
-                                        <b>${depth} 公里</b>
-                                    </div>
-                                </div>
-                                ${intensityListHtml}
-                                ${reportImage ? `<div style="margin-top: 14px; text-align: center;"><img src="${reportImage}" style="max-width: 100%; border-radius: 12px; border: 1px solid rgba(239,68,68,0.3);" alt="地震速報圖"></div>` : ''}
-                            </div>
-                        `;
-                    }
-
                     let htmlContent = '';
                     earthquakeData.forEach((eq, index) => {
                         const eqInfo = eq.EarthquakeInfo || {};
@@ -1571,13 +1375,11 @@
                     container.innerHTML = htmlContent;
                 } else {
                     container.innerHTML = `<div class="my-location-status">目前查無近期有感地震報告。</div>`;
-                    if (alertContainer) alertContainer.innerHTML = `<div class="my-location-status">目前無即時地震速報。</div>`;
                 }
             } catch (err) {
                 console.error("無法取得地震資料:", err);
                 if (earthquakeData.length === 0) {
                     container.innerHTML = `<div class="my-location-status" style="color: #f87171;"><i class="fas fa-exclamation-triangle"></i> 無法取得地震資訊，請稍後再試。</div>`;
-                    if (alertContainer) alertContainer.innerHTML = `<div class="my-location-status" style="color: #f87171;">無法取得地震速報。</div>`;
                 }
             } finally {
                 if (btn) btn.classList.remove('spinning');
@@ -2072,7 +1874,7 @@
 
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'wx', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -2112,16 +1914,6 @@
                         <div class="legend-labels-list">
                             <span>38+</span><span>35</span><span>30</span><span>25</span><span>20</span><span>15</span><span>10</span><span>&lt;10</span>
                         </div>
-                    </div>
-                `;
-            } else if (mode === 'wx') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">天氣狀況分布</div>
-                    <div class="legend-scale-body" style="flex-direction: column; gap: 4px; font-size: 11px;">
-                        <div>☀️ 晴朗 / 晴時多雲</div>
-                        <div>☁️ 多雲 / 陰天</div>
-                        <div>🌧️ 降雨 / 有雨</div>
-                        <div>⛈️ 雷雨</div>
                     </div>
                 `;
             } else if (mode === 'wind' || mode === 'windGust') {
@@ -2202,74 +1994,56 @@
                 const town = station.GeoInfo?.TownName || '';
                 const popVal = getPopForStation(county, town);
 
-                let customIcon;
-
-                if (['temp', 'wx', 'pop', 'rain', 'wind', 'windGust'].includes(currentMapMode)) {
-                    let val, bgColor, labelName, unit;
-                    if (currentMapMode === 'rain') {
-                        val = data.rain;
-                        bgColor = getRainColor(val);
-                        labelName = '日雨量';
-                        unit = 'mm';
-                    } else if (currentMapMode === 'pop') {
-                        val = popVal;
-                        bgColor = getPopColor(val);
-                        labelName = '降雨機率';
-                        unit = '%';
-                    } else if (currentMapMode === 'temp') {
-                        val = data.temp;
-                        bgColor = getTempColor(val);
-                        labelName = '氣溫';
-                        unit = '°C';
-                    } else if (currentMapMode === 'wx') {
-                        const wxInfo = forecastWxData[county] || { text: '晴', code: '1' };
-                        const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
-                        const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
-                        val = iconObj.icon;
-                        bgColor = 'rgba(15, 23, 42, 0.85)';
-                        labelName = '天氣狀況';
-                        unit = wxInfo.text;
-                    } else if (currentMapMode === 'wind') {
-                        val = data.windSpeed;
-                        bgColor = getWindColor(val);
-                        labelName = '風速';
-                        unit = 'm/s';
-                    } else {
-                        val = data.windGust;
-                        bgColor = getWindColor(val);
-                        labelName = '陣風';
-                        unit = 'm/s';
-                    }
-
-                    let displayVal = isNaN(val) ? '--' : val;
-                    let isEmoji = currentMapMode === 'wx';
-                    let centerTextColor = '#fff';
-                    if (!isEmoji && currentMapMode === 'temp' && val >= 20 && val < 30) centerTextColor = '#0f172a';
-                    else if (!isEmoji && currentMapMode === 'rain' && val >= 30 && val < 50) centerTextColor = '#0f172a';
-                    else if (!isEmoji && currentMapMode === 'pop' && val < 40) centerTextColor = '#0f172a';
-
-                    customIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="weather-dot-badge" style="background-color: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: ${isEmoji ? '14px' : '8px'}; font-weight: bold; color: ${centerTextColor}; width: ${isEmoji ? '28px' : '22px'}; height: ${isEmoji ? '28px' : '22px'}; margin-left: ${isEmoji ? '-6px' : '-3px'}; margin-top: ${isEmoji ? '-6px' : '-3px'};" title="${labelName}: ${unit}">${isEmoji ? val : (!isNaN(val) ? Math.round(val) : '--')}</div>`,
-                        iconSize: [isEmoji ? 28 : 22, isEmoji ? 28 : 22],
-                        iconAnchor: [isEmoji ? 14 : 11, isEmoji ? 14 : 11]
-                    });
+                let val, bgColor, labelName, unit;
+                if (currentMapMode === 'rain') {
+                    val = data.rain;
+                    bgColor = getRainColor(val);
+                    labelName = '日雨量';
+                    unit = 'mm';
+                } else if (currentMapMode === 'pop') {
+                    val = popVal;
+                    bgColor = getPopColor(val);
+                    labelName = '降雨機率';
+                    unit = '%';
+                } else if (currentMapMode === 'temp') {
+                    val = data.temp;
+                    bgColor = getTempColor(val);
+                    labelName = '氣溫';
+                    unit = '°C';
+                } else if (currentMapMode === 'wind') {
+                    val = data.windSpeed;
+                    bgColor = getWindColor(val);
+                    labelName = '風速';
+                    unit = 'm/s';
+                } else if (currentMapMode === 'windGust') {
+                    val = data.windGust;
+                    bgColor = getWindColor(val);
+                    labelName = '陣風';
+                    unit = 'm/s';
                 }
 
-                const marker = L.marker([lat, lon], { icon: customIcon });
+                if (isNaN(val)) return;
 
+                // 數值四捨五入取整數顯示於正圓形測站標籤內
+                const intVal = Math.round(val);
+                const html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}">${intVal}</div>`;
+                const icon = L.divIcon({
+                    className: '',
+                    html: html,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                const marker = L.marker([lat, lon], { icon: icon });
                 marker.bindPopup(`
                     <div class="popup-card">
-                        <h4>${station.StationName}</h4>
-                        <p><b>氣溫：</b> ${!isNaN(data.temp) ? data.temp + ' °C' : '--'}</p>
-                        <p><b>濕度：</b> ${data.humidity} %</p>
-                        <p><b>降雨機率：</b> ${popVal} %</p>
-                        <p><b>平均風速：</b> ${data.windSpeed} m/s (${getWindLevel(data.windSpeed)})</p>
-                        <p><b>最大陣風：</b> ${data.windGust} m/s (${getWindLevel(data.windGust)})</p>
-                        <p><b>日雨量：</b> ${data.rain} mm</p>
+                        <h4>${station.StationName} <span style="font-size:12px; font-weight:normal;">(${county}${town})</span></h4>
+                        <p>${labelName}：<b>${val} ${unit}</b></p>
+                        <p>氣溫：<b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</b></p>
+                        <p>日雨量：<b>${data.rain.toFixed(1)} mm</b></p>
+                        <p>風向風速：<b>${getWindDirectionText(data.windDir)} ${data.windSpeed.toFixed(1)} m/s</b></p>
                     </div>
                 `);
-
                 currentMarkersLayer.addLayer(marker);
             });
         }
