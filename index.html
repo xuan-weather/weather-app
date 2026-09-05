@@ -106,7 +106,7 @@
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
         
-        /* 新增：即時時鐘樣式 */
+        /* 即時時鐘樣式 */
         .live-clock-bar {
             background: rgba(6, 182, 212, 0.08);
             border: 1px solid rgba(6, 182, 212, 0.2);
@@ -551,9 +551,9 @@
                 </div>
             </div>
             
-            <!-- 新增：即時年月日與臺灣標準時間列 -->
+            <!-- 即時年月日、星期與臺灣標準時間列 -->
             <div class="live-clock-bar">
-                <div><i class="fas fa-calendar-alt"></i> <span id="liveDateText">----年--月--日</span></div>
+                <div><i class="fas fa-calendar-alt"></i> <span id="liveDateText">----年--月--日 星期-</span></div>
                 <div><i class="fas fa-clock"></i> 臺灣標準時間 <span id="liveTimeText">--:--:--</span></div>
             </div>
 
@@ -792,25 +792,26 @@
             }, 30000);
         });
 
-        // 新增：更新臺灣標準時間與年月日函式
+        // 更新臺灣標準時間與年月日、星期幾函式
         function initTaiwanClock() {
             const now = new Date();
-            // 轉換為臺灣時間 (UTC+8)
-            const optionsDate = { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' };
+            // 轉換為臺灣時間 (UTC+8)，加入 weekday: 'long' 取得星期幾
+            const optionsDate = { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' };
             const optionsTime = { timeZone: 'Asia/Taipei', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
             
             const dateFormatter = new Intl.DateTimeFormat('zh-TW', optionsDate);
             const timeFormatter = new Intl.DateTimeFormat('zh-TW', optionsTime);
 
             const parts = dateFormatter.formatToParts(now);
-            let year = '', month = '', day = '';
+            let year = '', month = '', day = '', weekday = '';
             parts.forEach(p => {
                 if (p.type === 'year') year = p.value;
                 if (p.type === 'month') month = p.value;
                 if (p.type === 'day') day = p.value;
+                if (p.type === 'weekday') weekday = p.value;
             });
 
-            const dateStr = `${year}年${month}月${day}日`;
+            const dateStr = `${year}年${month}月${day}日 ${weekday}`;
             const timeStr = timeFormatter.format(now);
 
             const dateEl = document.getElementById('liveDateText');
@@ -1877,7 +1878,7 @@
                         <h4>${station.StationName} <span style="font-size:12px; font-weight:normal;">(${county}${town})</span></h4>
                         <p>日累積雨量：<b>${data.rain.toFixed(1)} mm</b></p>
                         <p>當前氣溫：<b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</b></p>
-                        <p>濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '--'}</b></p>
+                        <p>相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '--'}</b></p>
                         <p>降雨機率：<b>${popVal} %</b></p>
                         <p>平均風速：<b>${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)})</b></p>
                         <p>最大陣風：<b>${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></p>
