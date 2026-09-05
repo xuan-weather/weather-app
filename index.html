@@ -1120,10 +1120,10 @@
             }
 
             const nonce = Date.now();
-            const url1 = `https://mingxuan.98487.xyz/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            const url2 = `https://mingxuan.98487.xyz/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            const url4 = `https://mingxuan.98487.xyz/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            const urlPop = `https://mingxuan.98487.xyz/api/v1/rest/datastore/F-C0032-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url1 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/O-A0001-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url2 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/O-A0003-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const url4 = `https://mingxuan.904037.xyz/api/v1/rest/datastore/W-C0033-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const urlPop = `https://mingxuan.904037.xyz/api/v1/rest/datastore/F-C0032-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const [res1, res2, res4, resPop] = await Promise.all([
@@ -1471,8 +1471,8 @@
             const alertContainer = document.getElementById('quakeAlertLiveContainer');
 
             const nonce = Date.now();
-            const majorEqUrl = `https://mingxuan.98487.xyz/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
-            const localEqUrl = `https://mingxuan.98487.xyz/api/v1/rest/datastore/E-A0016-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const majorEqUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/E-A0015-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const localEqUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/E-A0016-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const [resMajor, resLocal] = await Promise.all([
@@ -1587,7 +1587,7 @@
             const container = document.getElementById('typhoonListContainer');
 
             const nonce = Date.now();
-            const typhoonUrl = `https://mingxuan.98487.xyz/api/v1/rest/datastore/W-C0034-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
+            const typhoonUrl = `https://mingxuan.904037.xyz/api/v1/rest/datastore/W-C0034-001?Authorization=${CWA_API_KEY}&_=${nonce}`;
 
             try {
                 const res = await fetch(typhoonUrl, { cache: 'no-store' }).then(r => r.json());
