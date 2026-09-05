@@ -470,7 +470,7 @@
         .legend-color-bar-rain {
             width: 12px;
             border-radius: 3px;
-            background: linear-gradient(to top, #C0C0C0 0%, #00CCFF 10%, #0066FF 20%, #0000CC 30%, #00CC00 40%, #009900 50%, #FFFF00 60%, #FF9900 70%, #FF0000 80%, #990099 90%, #FF66FF 100%);
+            background: linear-gradient(to top, #C0C0C0 0%, #99FFFF 6.25%, #00CCFF 12.5%, #0066FF 18.75%, #0000CC 25%, #00CC00 31.25%, #009900 37.5%, #FFFF00 43.75%, #FFCC00 50%, #FF9900 56.25%, #FF6600 62.5%, #FF0000 68.75%, #CC0000 75%, #990000 81.25%, #990099 87.5%, #660066 93.75%, #FF66FF 100%);
             min-height: 220px;
         }
         .legend-labels-list {
@@ -481,21 +481,21 @@
             line-height: 1;
         }
 
-        /* 測站地圖圓點改為縮小後的高對比氣象標籤樣式 */
+        /* 測站地圖圓點改為固定的正圓形標籤樣式 (縮小版與氣象署色調一致) */
         .weather-dot-badge {
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             padding: 0;
             border-radius: 50%;
-            border: 1.2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 700;
             color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.8);
             white-space: nowrap;
         }
 
@@ -1884,7 +1884,7 @@
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="min-height: 220px;"></div>
                         <div class="legend-labels-list">
-                            <span>300</span><span>200</span><span>150</span><span>130</span><span>110</span><span>90</span><span>70</span><span>50</span><span>40</span><span>30</span><span>20</span><span>15</span><span>10</span><span>6</span><span>2</span><span>1</span>
+                            <span>300</span><span>200</span><span>150</span><span>130</span><span>110</span><span>90</span><span>70</span><span>50</span><span>40</span><span>30</span><span>20</span><span>15</span><span>10</span><span>6</span><span>2</span><span>1</span><span>0</span>
                         </div>
                     </div>
                 `;
@@ -1921,7 +1921,6 @@
             }
         }
 
-        /* 氣象署官方標準色階對應函式 */
         function getRainColor(rain) {
             if (rain >= 300) return '#FF66FF';
             if (rain >= 200) return '#660066';
@@ -2022,8 +2021,8 @@
                 const icon = L.divIcon({
                     className: '',
                     html: html,
-                    iconSize: [22, 22],
-                    iconAnchor: [11, 11]
+                    iconSize: [18, 18],
+                    iconAnchor: [9, 9]
                 });
 
                 const marker = L.marker([lat, lon], { icon: icon });
