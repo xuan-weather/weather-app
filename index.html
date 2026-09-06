@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW" data-theme="dark">
-<head>
+<head[cite: 8]>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>天氣即時預報 - CWA Pro Map</title>
@@ -160,6 +160,26 @@
         .action-btn.location-btn:hover { background: rgba(52, 211, 153, 0.15); border-color: #34d399; }
         .action-btn.spinning i { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* 全域全螢幕/顯著警報推播橫幅 */
+        #globalPushAlertBanner {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(185, 28, 28, 0.95));
+            border: 2px solid #f87171;
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+            display: none;
+            animation: banner-glow 1.5s infinite alternate;
+        }
+        @keyframes banner-glow {
+            0% { box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+            100% { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.7); }
+        }
+        #globalPushAlertBanner.active { display: block; }
+        .global-push-title { color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .global-push-desc { color: #fee2e2; font-size: 13px; line-height: 1.4; white-space: pre-line; }
+
         .warning-alert-box {
             background: rgba(239, 68, 68, 0.12);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -189,7 +209,7 @@
             border: 1px solid rgba(45, 212, 191, 0.25);
             border-radius: 18px;
             padding: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .my-location-header {
             display: flex;
@@ -511,12 +531,27 @@
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
             background: rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 12px; font-size: 12px; color: var(--text-muted);
         }
+        
+        /* 警示標籤樣式 */
+        .alarm-badge-tag {
+            background-color: #ef4444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+            animation: alarm-pulse 1s infinite alternate;
+        }
     </style>
 </head>
-<body>
-    <div class="container">
+<body[cite: 8]>
+    <div class="container"[cite: 8]>
         <!-- 頁籤導覽 -->
-        <div class="page-tabs">
+        <div class="page-tabs"[cite: 8]>
             <button id="tabDashboard" class="tab-btn active" onclick="switchMainPage('dashboard')">
                 <i class="fas fa-chart-line"></i> 觀測儀表板
             </button>
@@ -537,14 +572,14 @@
             </button>
         </div>
         <!-- 儀表板面板 -->
-        <div id="dashboardPanel" class="content-panel active modern-dashboard">
-            <div class="header">
-                <div class="header-title">
+        <div id="dashboardPanel" class="content-panel active modern-dashboard"[cite: 8]>
+            <div class="header"[cite: 8]>
+                <div class="header-title"[cite: 8]>
                     <i class="fas fa-cloud-sun-rain" style="color: #06b6d4;"></i>
                     <h2>天氣即時資訊</h2>
                     <span id="dashboardAlarmLight" class="alarm-indicator" title="警報指示燈"></span>
                 </div>
-                <div class="header-actions">
+                <div class="header-actions"[cite: 8]>
                     <button class="action-btn" id="refreshBtn" onclick="fetchAllStationData(true)">
                         <i class="fas fa-sync-alt"></i> 重新整理
                     </button>
@@ -552,15 +587,23 @@
             </div>
             
             <!-- 即時年月日、星期與臺灣標準時間列 -->
-            <div class="live-clock-bar">
+            <div class="live-clock-bar"[cite: 8]>
                 <div><i class="fas fa-calendar-alt"></i> <span id="liveDateText">----年--月--日 星期-</span></div>
                 <div><i class="fas fa-clock"></i> 臺灣標準時間 <span id="liveTimeText">--:--:--</span></div>
             </div>
 
+            <!-- 全域明顯警報推播橫幅 -->
+            <div id="globalPushAlertBanner">
+                <div class="global-push-title">
+                    <i class="fas fa-bullhorn"></i> <span id="globalPushTitleText">氣象警特報即時推播</span>
+                </div>
+                <div id="globalPushDescText" class="global-push-desc">--</div>
+            </div>
+
             <!-- 我的位置 Widget -->
-            <div class="my-location-widget">
-                <div class="my-location-header">
-                    <div class="my-location-title">
+            <div class="my-location-widget"[cite: 8]>
+                <div class="my-location-header"[cite: 8]>
+                    <div class="my-location-title"[cite: 8]>
                         <i class="fas fa-location-crosshairs"></i> 您目前所在位置天氣
                     </div>
                     <button class="action-btn location-btn" style="padding: 4px 10px; font-size: 12px;" onclick="initUserLocationWeather()">
@@ -568,67 +611,86 @@
                     </button>
                 </div>
                 <div id="myLocationContentArea">
-                    <div class="my-location-status">
+                    <div class="my-location-status"[cite: 8]>
                         <i class="fas fa-spinner fa-spin"></i> 正在取得 GPS 定位...
                     </div>
                 </div>
             </div>
-            <div class="section-divider-title">
+
+            <!-- 我的最愛測站快選區塊 -->
+            <div class="my-location-widget" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(15, 23, 42, 0.1)); border-color: rgba(245, 158, 11, 0.25);">
+                <div class="my-location-header" style="border-bottom-color: rgba(245, 158, 11, 0.2);">
+                    <div class="my-location-title" style="color: #f59e0b;">
+                        <i class="fas fa-star"></i> 我的最愛測站快選
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted);">點擊卡片快速切換測站</div>
+                </div>
+                <div id="favoritesContainer">
+                    <div class="my-location-status">尚未加入任何最愛測站，請在下方查詢測站後點擊「加入最愛」。</div>
+                </div>
+            </div>
+
+            <div class="section-divider-title"[cite: 8]>
                 <i class="fas fa-search-location"></i> 測站查詢與即時數據
             </div>
-            <div id="warningAlertBox" class="warning-alert-box">
-                <div class="warning-title">
+            <div id="warningAlertBox" class="warning-alert-box"[cite: 8]>
+                <div class="warning-title"[cite: 8]>
                     <i class="fas fa-exclamation-triangle"></i> <span id="warningTitleText">天氣警特報</span>
                 </div>
                 <div id="warningContentText" class="warning-content">--</div>
             </div>
-            <div id="noWarningBox" class="no-warning-box">
+            <div id="noWarningBox" class="no-warning-box"[cite: 8]>
                 <i class="fas fa-shield-alt"></i> 目前無發布特殊天氣警特報
             </div>
                          
-            <div class="segment-control" id="stationTypeToggle">
+            <div class="segment-control" id="stationTypeToggle"[cite: 8]>
                 <button class="segment-btn active" data-type="normal" onclick="setStationType('normal')">🏙️ 鄉鎮市區站</button>
                 <button class="segment-btn" data-type="freeway" onclick="setStationType('freeway')">🚗 國道觀測站</button>
             </div>
-            <div class="controls-grid">
-                <div class="control-group">
+            <div class="controls-grid"[cite: 8]>
+                <div class="control-group"[cite: 8]>
                     <label><i class="fas fa-map"></i> 選擇縣市</label>
                     <select class="select-box" id="citySelect" onchange="onCityChange()">
                     </select>
                 </div>
-                <div class="control-group">
-                    <label><i class="fas fa-broadcast-tower"></i> 選擇測站</label>
+                <div class="control-group"[cite: 8]>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-broadcast-tower"></i> 選擇測站</span>
+                        <button id="favoriteActionBtn" onclick="toggleCurrentStationFavorite()" style="background: none; border: none; color: #f59e0b; cursor: pointer; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 3px;">
+                            <i class="far fa-star" id="favoriteStarIcon"></i> <span id="favoriteBtnText">加入最愛</span>
+                        </button>
+                    </label>
                     <select class="select-box" id="stationSelect" onchange="onStationChange()">
                     </select>
                 </div>
             </div>
-            <div class="weather-status-banner">
-                <div class="weather-status-left">
+            <div class="weather-status-banner"[cite: 8]>
+                <div class="weather-status-left"[cite: 8]>
                     <div id="weatherStatusIcon" class="weather-status-icon">☀️</div>
-                    <div class="weather-status-text">
+                    <div class="weather-status-text"[cite: 8]>
                         <h4 id="weatherStatusTitle">載入中...</h4>
                         <p id="weatherStatusDesc">--</p>
                     </div>
                 </div>
             </div>
-            <div class="meta-info-bar">
+            <div class="meta-info-bar"[cite: 8]>
                 <span id="currentStationTag">載入中...</span>
                 <span id="obsTimeTag" class="obs-time-tag">觀測時間：--:--</span>
             </div>
-            <div class="realtime-info-box">
-                <div class="info-card-item">
+            <div class="realtime-info-box"[cite: 8]>
+                <div class="info-card-item"[cite: 8]>
                     <span>🌡️ 當前氣溫</span>
                     <b id="liveTemp">-- °C</b>
                 </div>
-                <div class="info-card-item">
+                <div class="info-card-item"[cite: 8]>
                     <span>💨 風向/風力</span>
                     <b id="liveWind">--</b>
                 </div>
-                <div class="info-card-item">
+                <div class="info-card-item"[cite: 8]>
                     <span>💧 相對濕度</span>
                     <b id="liveHumidity">-- %</b>
                 </div>
-                <div class="info-card-item">
+                <div class="info-card-item"[cite: 8]>
                     <span>📈 降雨機率 (PoP)</span>
                     <b id="livePop" style="color: #38bdf8;">-- %</b>
                 </div>
@@ -638,7 +700,7 @@
                 </div>
             </div>
             <!-- 排行榜區塊 -->
-            <div class="ranking-section-box">
+            <div class="ranking-section-box"[cite: 8]>
                 <div class="section-divider-title" style="margin-top: 15px;">
                     <i class="fas fa-trophy" style="color: #f59e0b;"></i> 全台氣象排行榜 Top 10
                 </div>
@@ -652,24 +714,24 @@
                     <div class="my-location-status" style="grid-column: span 2;">載入中...</div>
                 </div>
             </div>
-            <div class="chart-card">
-                <div class="chart-header">
+            <div class="chart-card"[cite: 8]>
+                <div class="chart-header"[cite: 8]>
                     <div id="chartMainTitle" class="chart-title">24小時氣溫趨勢</div>
                     <div id="chartTimeSubtitle" class="chart-subtitle">----/--/-- --:-- ~ ----/--/-- --:--</div>
                 </div>
-                <div class="chart-box">
+                <div class="chart-box"[cite: 8]>
                     <canvas id="tempChart"></canvas>
                 </div>
             </div>
         </div>
         <!-- 地圖面板 -->
-        <div id="mapPanel" class="content-panel map-section">
-            <div class="map-header">
-                <div class="map-title-row">
+        <div id="mapPanel" class="content-panel map-section"[cite: 8]>
+            <div class="map-header"[cite: 8]>
+                <div class="map-title-row"[cite: 8]>
                     <h3><i class="fas fa-globe-asia"></i> 天氣即時觀測</h3>
                     <span id="mapObsTimeTag" style="font-size: 12px; color: #38bdf8; font-weight: 600;">CWA 觀測時間 --</span>
                 </div>
-                <div class="map-mode-btn-group">
+                <div class="map-mode-btn-group"[cite: 8]>
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
                     <button id="btnMapPop" onclick="switchMapMode('pop')">📈 降雨機率</button>
                     <button id="btnMapHumidity" onclick="switchMapMode('humidity')">💧 濕度</button>
@@ -679,13 +741,13 @@
                 </div>
             </div>
                          
-            <div class="map-container-wrapper">
+            <div class="map-container-wrapper"[cite: 8]>
                 <div id="map"></div>
             </div>
         </div>
         <!-- 縣市預報面板 -->
-        <div id="countyForecastPanel" class="content-panel modern-dashboard">
-            <div class="header">
+        <div id="countyForecastPanel" class="content-panel modern-dashboard"[cite: 8]>
+            <div class="header"[cite: 8]>
                 <div class="header-title" style="flex-wrap: nowrap; overflow: hidden; width: 100%;">
                     <i class="fas fa-temperature-high" style="color: #38bdf8; flex-shrink: 0;"></i>
                     <h2 style="white-space: nowrap; font-size: 1.15rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; width: 100%;">全台各縣市未來天氣預報</h2>
@@ -696,7 +758,7 @@
                     </button>
                 </div>
             </div>
-            <div class="section-divider-title">
+            <div class="section-divider-title"[cite: 8]>
                 <i class="fas fa-cloud-sun"></i> 各縣市近期天氣概況
             </div>
             <div id="countyForecastGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 520px; overflow-y: auto; padding-right: 4px;">
@@ -704,45 +766,45 @@
             </div>
         </div>
         <!-- 地震面板 -->
-        <div id="quakePanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
+        <div id="quakePanel" class="content-panel modern-dashboard"[cite: 8]>
+            <div class="header"[cite: 8]>
+                <div class="header-title"[cite: 8]>
                     <i class="fas fa-house-chimney-crack" style="color: #f59e0b;"></i>
                     <h2>即時地震報告</h2>
                 </div>
-                <div class="header-actions">
+                <div class="header-actions"[cite: 8]>
                     <button class="action-btn" id="refreshQuakeBtn" onclick="fetchEarthquakeData(true)">
                         <i class="fas fa-sync-alt"></i> 重新整理
                     </button>
                 </div>
             </div>
-            <div class="section-divider-title">
+            <div class="section-divider-title"[cite: 8]>
                 <i class="fas fa-history"></i> 近期有感地震
             </div>
             <div id="quakeListContainer">
-                <div class="my-location-status">
+                <div class="my-location-status"[cite: 8]>
                     <i class="fas fa-spinner fa-spin"></i> 載入地震資訊中...
                 </div>
             </div>
         </div>
         <!-- 颱風面板 -->
-        <div id="typhoonPanel" class="content-panel modern-dashboard">
-            <div class="header">
-                <div class="header-title">
+        <div id="typhoonPanel" class="content-panel modern-dashboard"[cite: 8]>
+            <div class="header"[cite: 8]>
+                <div class="header-title"[cite: 8]>
                     🌀 <i class="fas fa-hurricane" style="color: #06b6d4;"></i>
                     <h2>颱風動態消息</h2>
                 </div>
-                <div class="header-actions">
+                <div class="header-actions"[cite: 8]>
                     <button class="action-btn" id="refreshTyphoonBtn" onclick="fetchTyphoonData(true)">
                         <i class="fas fa-sync-alt"></i> 重新整理
                     </button>
                 </div>
             </div>
-            <div class="section-divider-title">
+            <div class="section-divider-title"[cite: 8]>
                 <i class="fas fa-info-circle"></i> 颱風警報與消息
             </div>
             <div id="typhoonListContainer">
-                <div class="my-location-status">
+                <div class="my-location-status"[cite: 8]>
                     <i class="fas fa-spinner fa-spin"></i> 載入颱風資訊中...
                 </div>
             </div>
@@ -768,6 +830,8 @@
         let cityStationMapping = {};
         let currentStationType = 'normal';
         let currentRankingTab = 'rain';
+        let userCurrentCounty = ''; // 儲存GPS定位所處的縣市
+        
         const TAIWAN_REGIONS_ORDER = [
             "基隆市", "臺北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣",
             "臺中市", "彰化縣", "南投縣", "雲林縣",
@@ -785,6 +849,7 @@
 
             fetchAllStationData(false, () => {
                 initUserLocationWeather();
+                renderFavoritesSection();
             });
             fetchEarthquakeData(false);
             fetchTyphoonData(false);
@@ -792,6 +857,161 @@
                 fetchEarthquakeData(false);
             }, 30000);
         });
+
+        // 取得與儲存我的最愛測站 ID 陣列
+        function getFavoriteStationIds() {
+            try {
+                return JSON.parse(localStorage.getItem('cwa_favorite_stations') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function toggleCurrentStationFavorite() {
+            const stationSelect = document.getElementById('stationSelect');
+            const stationId = stationSelect.value;
+            if (!stationId) return;
+            let favs = getFavoriteStationIds();
+            const index = favs.indexOf(stationId);
+            if (index > -1) {
+                favs.splice(index, 1);
+            } else {
+                favs.push(stationId);
+            }
+            localStorage.setItem('cwa_favorite_stations', JSON.stringify(favs));
+            updateFavoriteButtonState();
+            renderFavoritesSection();
+            checkAndTriggerPushNotification(); // 更新最愛後立即檢查警報推播
+        }
+
+        function updateFavoriteButtonState() {
+            const stationSelect = document.getElementById('stationSelect');
+            const stationId = stationSelect.value;
+            const favs = getFavoriteStationIds();
+            const starIcon = document.getElementById('favoriteStarIcon');
+            const btnText = document.getElementById('favoriteBtnText');
+            if (!starIcon || !btnText) return;
+            if (favs.includes(stationId)) {
+                starIcon.className = 'fas fa-star';
+                starIcon.style.color = '#f59e0b';
+                btnText.innerText = '已在最愛';
+            } else {
+                starIcon.className = 'far fa-star';
+                starIcon.style.color = 'inherit';
+                btnText.innerText = '加入最愛';
+            }
+        }
+
+        // 檢查某個縣市目前是否有發布警特報
+        function getCountyActiveWarnings(cityName) {
+            if (!cityName || !warningData || warningData.length === 0) return [];
+            const matchedLocation = warningData.find(loc => (loc.locationName || "").replace('台', '臺') === cityName);
+            if (matchedLocation && matchedLocation.hazardConditions && matchedLocation.hazardConditions.hazards.length > 0) {
+                let results = [];
+                matchedLocation.hazardConditions.hazards.forEach(h => {
+                    const info = h.info || {};
+                    let phenomena = info.phenomena || "警戒";
+                    let significance = info.significance || "";
+                    results.push(`${phenomena} ${significance}`);
+                });
+                return results;
+            }
+            return [];
+        }
+
+        // 核心功能：檢查並推播定位或最愛縣市的氣象警特報
+        function checkAndTriggerPushNotification() {
+            const banner = document.getElementById('globalPushAlertBanner');
+            const titleEl = document.getElementById('globalPushTitleText');
+            const descEl = document.getElementById('globalPushDescText');
+            if (!banner || !titleEl || !descEl) return;
+
+            let alertCountiesMap = new Map(); // 記錄哪個縣市有什麼警報
+
+            // 1. 檢查 GPS 定位所在縣市
+            if (userCurrentCounty) {
+                let warnings = getCountyActiveWarnings(userCurrentCounty);
+                if (warnings.length > 0) {
+                    alertCountiesMap.set(userCurrentCounty, warnings);
+                }
+            }
+
+            // 2. 檢查所有「我的最愛」測站所屬的縣市
+            const favIds = getFavoriteStationIds();
+            favIds.forEach(id => {
+                const station = weatherStationData.find(s => s.StationId === id);
+                if (station) {
+                    const county = (station.GeoInfo?.CountyName || '').replace('台', '臺');
+                    if (county) {
+                        let warnings = getCountyActiveWarnings(county);
+                        if (warnings.length > 0) {
+                            alertCountiesMap.set(county, warnings);
+                        }
+                    }
+                }
+            });
+
+            // 3. 渲染推播通知橫幅與更新卡片標籤
+            if (alertCountiesMap.size > 0) {
+                let alertDetails = [];
+                alertCountiesMap.forEach((warnings, county) => {
+                    alertDetails.push(`【${county}】${warnings.join('、')}`);
+                });
+                titleEl.innerText = `⚠️ 您關注或定位的縣市發布氣象警特報！`;
+                descEl.innerText = alertDetails.join('\n');
+                banner.classList.add('active');
+            } else {
+                banner.classList.remove('active');
+            }
+
+            // 同步重新整理最愛卡片與縣市預報卡片以顯示警示標籤
+            renderFavoritesSection();
+            renderCountyForecastGrid();
+        }
+
+        function renderFavoritesSection() {
+            const container = document.getElementById('favoritesContainer');
+            if (!container) return;
+            const favIds = getFavoriteStationIds();
+            if (favIds.length === 0 || weatherStationData.length === 0) {
+                container.innerHTML = `<div class="my-location-status" style="padding: 10px;">尚未加入任何最愛測站，請在下方查詢測站後點擊右上角「加入最愛」。</div>`;
+                return;
+            }
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">';
+            favIds.forEach(id => {
+                const station = weatherStationData.find(s => s.StationId === id);
+                if (station) {
+                    const data = parseStationElement(station);
+                    const county = (station.GeoInfo?.CountyName || '').replace('台', '臺');
+                    const town = station.GeoInfo?.TownName || '';
+                    const popVal = getPopForStation(county, town);
+                    const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+                    const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: '晴時多雲', code: '1' };
+                    const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
+
+                    // 檢查該最愛縣市是否有警特報
+                    const countyWarnings = getCountyActiveWarnings(county);
+                    const hasAlarm = countyWarnings.length > 0;
+                    const alarmTagHtml = hasAlarm ? `<span class="alarm-badge-tag"><i class="fas fa-exclamation-triangle"></i> 警報中</span>` : '';
+
+                    html += `
+                        <div style="background: var(--card-bg); border: 1px solid ${hasAlarm ? '#ef4444' : 'var(--card-border)'}; border-radius: 14px; padding: 12px; cursor: pointer; transition: all 0.2s; position: relative;" onclick="selectStationById('${station.StationId}')" title="點擊切換至此測站">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-color);">${station.StationName} ${alarmTagHtml}</div>
+                                <div style="font-size: 20px;">${iconObj.icon}</div>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${county}${town}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px;">
+                                <div style="font-size: 16px; font-weight: 700; color: #38bdf8;">${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</div>
+                                <div style="font-size: 11px; color: #38bdf8;">降雨 ${popVal}%</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
 
         // 更新臺灣標準時間與年月日、星期幾函式
         function initTaiwanClock() {
@@ -1045,6 +1265,8 @@
                     }
                     renderRankings();
                     renderCountyForecastGrid();
+                    renderFavoritesSection();
+                    checkAndTriggerPushNotification(); // 每次載入資料後檢查警報推播
                     if (mapInitialized) renderMapMarkers();
                 }
             } catch (err) {
@@ -1088,9 +1310,16 @@
                 const minT = forecastMinTData[county] || '--';
                 const maxT = forecastMaxTData[county] || '--';
                 const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
+
+                // 檢查該縣市是否有警特報，並加上標籤
+                const countyWarnings = getCountyActiveWarnings(county);
+                const hasAlarm = countyWarnings.length > 0;
+                const alarmTagHtml = hasAlarm ? `<span class="alarm-badge-tag" style="margin-top: 2px;"><i class="fas fa-exclamation-triangle"></i> 警報中</span>` : '';
+
                 html += `
-                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; transition: all 0.2s;" class="ranking-card">
+                    <div style="background: var(--card-bg); border: 1px solid ${hasAlarm ? '#ef4444' : 'var(--card-border)'}; border-radius: 16px; padding: 14px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; transition: all 0.2s;" class="ranking-card">
                         <div style="font-size: 15px; font-weight: 700; color: var(--text-color);">${county}</div>
+                        ${alarmTagHtml}
                         <div style="font-size: 32px; margin: 2px 0;" title="${wxInfo.text}">${iconObj.icon}</div>
                         <div style="font-size: 12px; font-weight: 600; color: #38bdf8; min-height: 26px; display: flex; align-items: center; justify-content: center; line-height: 1.2;">${wxInfo.text}</div>
                         <div style="font-size: 13px; font-weight: 700; color: var(--text-color); margin-top: 2px;">
@@ -1238,7 +1467,6 @@
             const stationSelect = document.getElementById('stationSelect');
             stationSelect.value = stationId;
             renderCurrentStationData();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         async function fetchEarthquakeData(isManualRefresh = false) {
             const btn = document.getElementById('refreshQuakeBtn');
@@ -1434,8 +1662,11 @@
                         const data = parseStationElement(closestStation);
                         const county = (closestStation.GeoInfo?.CountyName || '').replace('台', '臺');
                         const town = closestStation.GeoInfo?.TownName || '';
-                        const popVal = getPopForStation(county, town);
                         
+                        userCurrentCounty = county; // 記錄目前定位縣市
+                        checkAndTriggerPushNotification(); // 定位成功後重新整理警報推播
+
+                        const popVal = getPopForStation(county, town);
                         const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
                         const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: '晴時多雲', code: '1' };
                         const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
@@ -1586,6 +1817,7 @@
             const selectedCity = document.getElementById('citySelect').value;
             const selectedStationId = document.getElementById('stationSelect').value;
             checkCityWarnings(selectedCity);
+            updateFavoriteButtonState();
             const targetStation = weatherStationData.find(s => s.StationId === selectedStationId);
             if (targetStation) {
                 updateDashboardWithStation(targetStation);
@@ -1606,7 +1838,6 @@
             const townName = town ? ` (${town})` : '';
             const popVal = getPopForStation(county, town);
             
-            // 使用氣象署預報的 Wx 狀況與圖示，確保與上方及全台預報完全一致
             const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
             const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: '晴時多雲', code: '1' };
             const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
@@ -1894,7 +2125,6 @@
                 let displayVal = (currentMapMode === 'pop' || currentMapMode === 'humidity') ? Math.round(val) : val.toFixed(1);
 
                 if (zoom >= 10) {
-                    // 已放大狀態：將圓點與文字尺寸稍微調大
                     html = `<div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 14px; height: 14px; background-color: ${bgColor}; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.8);"></div><div style="font-size: 13px; color: #fff; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; margin-top: 2px; white-space: nowrap;" title="${station.StationName}: ${val} ${unit}">${displayVal}</div></div>`;
                     iconSize = [60, 40];
                     iconAnchor = [30, 8];
@@ -1920,7 +2150,7 @@
                         <p>降雨機率：<b>${popVal} %</b></p>
                         <p>當前風向：<b>${getWindDirectionText(data.windDir)}</b></p>
                         <p>平均風速：<b>${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)})</b></p>
-                        <p>最大陣風：<b>${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></p>
+                        <p>陣風風速：<b>${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></p>
                     </div>
                 `);
                 currentMarkersLayer.addLayer(marker);
