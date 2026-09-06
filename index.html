@@ -672,6 +672,7 @@
                 <div class="map-mode-btn-group">
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
                     <button id="btnMapPop" onclick="switchMapMode('pop')">📈 降雨機率</button>
+                    <button id="btnMapHumidity" onclick="switchMapMode('humidity')">💧 濕度</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
                     <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
@@ -1732,7 +1733,7 @@
         }
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'pop', 'humidity', 'rain', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1757,6 +1758,16 @@
                     <div class="legend-header-title">降雨機率 (%)</div>
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #94a3b8 0%, #38bdf8 30%, #0284c7 60%, #2563eb 85%, #7c3aed 100%); min-height: 160px;"></div>
+                        <div class="legend-labels-list">
+                            <span>100%</span><span>80%</span><span>60%</span><span>40%</span><span>20%</span><span>0%</span>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'humidity') {
+                legendBox.innerHTML = `
+                    <div class="legend-header-title">濕度 (%)</div>
+                    <div class="legend-scale-body">
+                        <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #94a3b8 0%, #38bdf8 40%, #0284c7 70%, #2563eb 100%); min-height: 160px;"></div>
                         <div class="legend-labels-list">
                             <span>100%</span><span>80%</span><span>60%</span><span>40%</span><span>20%</span><span>0%</span>
                         </div>
@@ -1811,6 +1822,13 @@
             if (pop >= 10) return '#38bdf8';
             return '#94a3b8';
         }
+        function getHumidityColor(humidity) {
+            if (humidity >= 90) return '#2563eb';
+            if (humidity >= 80) return '#0284c7';
+            if (humidity >= 70) return '#0ea5e9';
+            if (humidity >= 50) return '#38bdf8';
+            return '#94a3b8';
+        }
         function getTempColor(temp) {
             if (temp >= 38) return '#990099';
             if (temp >= 35) return '#FF0000';
@@ -1852,6 +1870,10 @@
                     val = popVal;
                     bgColor = getPopColor(val);
                     unit = '%';
+                } else if (currentMapMode === 'humidity') {
+                    val = data.humidity === '--' ? NaN : data.humidity;
+                    bgColor = getHumidityColor(val);
+                    unit = '%';
                 } else if (currentMapMode === 'temp') {
                     val = data.temp;
                     bgColor = getTempColor(val);
@@ -1869,7 +1891,7 @@
                 
                 let html;
                 let iconSize, iconAnchor;
-                let displayVal = currentMapMode === 'pop' ? Math.round(val) : val.toFixed(1);
+                let displayVal = (currentMapMode === 'pop' || currentMapMode === 'humidity') ? Math.round(val) : val.toFixed(1);
 
                 if (zoom >= 10) {
                     // 已放大狀態：將圓點與文字尺寸稍微調大
