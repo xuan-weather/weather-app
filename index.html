@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天氣即時預報 - CWA Pro Map[cite: 4]</title>
+    <title>天氣即時預報 - CWA Pro Map</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/4.0.0/Control.FullScreen.min.css" />
@@ -673,7 +673,6 @@
                     <button id="btnMapTemp" class="active" onclick="switchMapMode('temp')">🌡️ 氣溫</button>
                     <button id="btnMapPop" onclick="switchMapMode('pop')">📈 降雨機率</button>
                     <button id="btnMapRain" onclick="switchMapMode('rain')">🌧️ 日雨量</button>
-                    <button id="btnMapWindDir" onclick="switchMapMode('windDir')">🧭 風向</button>
                     <button id="btnMapWind" onclick="switchMapMode('wind')">💨 風速</button>
                     <button id="btnMapWindGust" onclick="switchMapMode('windGust')">🌪️ 陣風</button>
                 </div>
@@ -1730,7 +1729,7 @@
         }
         function switchMapMode(mode) {
             currentMapMode = mode;
-            ['temp', 'pop', 'rain', 'windDir', 'wind', 'windGust'].forEach(m => {
+            ['temp', 'pop', 'rain', 'wind', 'windGust'].forEach(m => {
                 const btn = document.getElementById(`btnMap${m.charAt(0).toUpperCase() + m.slice(1)}`);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1748,17 +1747,6 @@
                         <div class="legend-labels-list">
                             <span>300</span><span>200</span><span>150</span><span>130</span><span>110</span><span>90</span><span>70</span><span>50</span><span>40</span><span>30</span><span>20</span><span>15</span><span>10</span><span>6</span><span>2</span><span>1</span><span>0</span>
                         </div>
-                    </div>
-                `;
-            } else if (mode === 'windDir') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">風向 (m/s)</div>
-                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 10px;">
-                        <div style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-location-arrow" style="color: #ec4899;"></i> <span>≥32.7</span></div>
-                        <div style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-location-arrow" style="color: #a855f7;"></i> <span>13.9-32.6</span></div>
-                        <div style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-location-arrow" style="color: #3b82f6;"></i> <span>8.0-13.8</span></div>
-                        <div style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-location-arrow" style="color: #4ade80;"></i> <span>3.4-7.9</span></div>
-                        <div style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-location-arrow" style="color: #ffffff;"></i> <span>0.1-3.3</span></div>
                     </div>
                 `;
             } else if (mode === 'pop') {
@@ -1840,14 +1828,6 @@
             if (speed >= 1.6) return '#3b82f6';
             return '#71717a';
         }
-        function getWindArrowColor(speed) {
-            if (isNaN(speed) || speed < 0.1) return '#ffffff';
-            if (speed >= 32.7) return '#ec4899';
-            if (speed >= 13.9) return '#a855f7';
-            if (speed >= 8.0) return '#3b82f6';
-            if (speed >= 3.4) return '#4ade80';
-            return '#ffffff';
-        }
         function renderMapMarkers() {
             if (!currentMarkersLayer) return;
             currentMarkersLayer.clearLayers();
@@ -1864,10 +1844,6 @@
                     val = data.rain;
                     bgColor = getRainColor(val);
                     unit = 'mm';
-                } else if (currentMapMode === 'windDir') {
-                    val = data.windDir;
-                    bgColor = getWindArrowColor(data.windSpeed);
-                    unit = '°';
                 } else if (currentMapMode === 'pop') {
                     val = popVal;
                     bgColor = getPopColor(val);
@@ -1889,16 +1865,9 @@
                 
                 let html;
                 let iconSize, iconAnchor;
-                if (currentMapMode === 'windDir') {
-                    const windRot = !isNaN(data.windDir) && data.windDir >= 0 ? data.windDir + 135 : 0;
-                    html = `<div style="transform: rotate(${windRot}deg); display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));" title="${station.StationName}: ${data.windSpeed} m/s, ${data.windDir}°"><i class="fas fa-location-arrow" style="font-size: 14px; color: ${bgColor};"></i></div>`;
-                    iconSize = [16, 16];
-                    iconAnchor = [8, 8];
-                } else {
-                    html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}"></div>`;
-                    iconSize = [12, 12];
-                    iconAnchor = [6, 6];
-                }
+                html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}"></div>`;
+                iconSize = [12, 12];
+                iconAnchor = [6, 6];
 
                 const icon = L.divIcon({
                     className: '',
@@ -1914,7 +1883,7 @@
                         <p>當前氣溫：<b>${!isNaN(data.temp) ? data.temp.toFixed(1) + ' °C' : '--'}</b></p>
                         <p>相對濕度：<b>${data.humidity !== '--' ? data.humidity + ' %' : '--'}</b></p>
                         <p>降雨機率：<b>${popVal} %</b></p>
-                        <p>當前風向：<b>${getWindDirectionText(data.windDir)} (${!isNaN(data.windDir) && data.windDir >= 0 ? data.windDir.toFixed(0) + '°' : '--'})</b></p>
+                        <p>當前風向：<b>${getWindDirectionText(data.windDir)}</b></p>
                         <p>平均風速：<b>${data.windSpeed.toFixed(1)} m/s (${getWindLevel(data.windSpeed)})</b></p>
                         <p>最大陣風：<b>${data.windGust.toFixed(1)} m/s (${getWindLevel(data.windGust)})</b></p>
                     </div>
