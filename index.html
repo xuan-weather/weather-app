@@ -1714,6 +1714,9 @@
                 maxZoom: 18
             }).addTo(map);
             map.addLayer(currentMarkersLayer);
+            map.on('zoomend', () => {
+                if (mapInitialized) renderMapMarkers();
+            });
             const LegendControl = L.Control.extend({
                 options: { position: 'topleft' }, // 更改為左上方 (topleft)
                 onAdd: function (map) {
@@ -1831,6 +1834,7 @@
         function renderMapMarkers() {
             if (!currentMarkersLayer) return;
             currentMarkersLayer.clearLayers();
+            const zoom = map ? map.getZoom() : 8;
             weatherStationData.forEach(station => {
                 const lat = parseFloat(station.GeoInfo?.Coordinates?.[1]?.StationLatitude || station.Latitude);
                 const lon = parseFloat(station.GeoInfo?.Coordinates?.[1]?.StationLongitude || station.Longitude);
@@ -1865,9 +1869,17 @@
                 
                 let html;
                 let iconSize, iconAnchor;
-                html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}"></div>`;
-                iconSize = [12, 12];
-                iconAnchor = [6, 6];
+                let displayVal = (currentMapMode === 'rain' || currentMapMode === 'pop') ? Math.round(val) : val.toFixed(1);
+
+                if (zoom >= 10) {
+                    html = `<div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 8px; height: 8px; background-color: ${bgColor}; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.8);"></div><div style="font-size: 11px; color: #fff; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; margin-top: 2px; white-space: nowrap;" title="${station.StationName}: ${val} ${unit}">${displayVal}</div></div>`;
+                    iconSize = [50, 30];
+                    iconAnchor = [25, 4];
+                } else {
+                    html = `<div class="weather-dot-badge" style="background-color: ${bgColor};" title="${station.StationName}: ${val} ${unit}"></div>`;
+                    iconSize = [12, 12];
+                    iconAnchor = [6, 6];
+                }
 
                 const icon = L.divIcon({
                     className: '',
