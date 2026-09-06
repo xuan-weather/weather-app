@@ -922,7 +922,7 @@
             }
             let temp = parseFloat(we.AirTemperature ?? we.TEMP);
             if (isNaN(temp) || temp < -50) temp = NaN;
-            let rain = parseFloat(we.Now?.Precipitation ?? we.DailyAccumulation ?? we.NOW?.Precipitation);
+            let rain = parseFloat(we.Now?.Precipitation ?? we.DailyAccumulation ?? we.NOW?.Precipitation ?? we.RAIN);
             if (isNaN(rain) || rain < 0) rain = 0;
             let windSpeed = parseFloat(we.WindSpeed ?? we.WDSD);
             if (isNaN(windSpeed) || windSpeed < 0) windSpeed = 0;
@@ -1718,7 +1718,7 @@
                 if (mapInitialized) renderMapMarkers();
             });
             const LegendControl = L.Control.extend({
-                options: { position: 'topleft' }, // 更改為左上方 (topleft)
+                options: { position: 'topleft' },
                 onAdd: function (map) {
                     const div = L.DomUtil.create('div', 'custom-vertical-legend');
                     div.id = 'verticalLegendBox';
@@ -1869,7 +1869,8 @@
                 
                 let html;
                 let iconSize, iconAnchor;
-                let displayVal = (currentMapMode === 'rain' || currentMapMode === 'pop') ? Math.round(val) : val.toFixed(1);
+                // 將 rain 與其他數值一樣使用 .toFixed(1) 顯示小數位，保留 .5 數值
+                let displayVal = currentMapMode === 'pop' ? Math.round(val) : val.toFixed(1);
 
                 if (zoom >= 10) {
                     html = `<div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 8px; height: 8px; background-color: ${bgColor}; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.8);"></div><div style="font-size: 11px; color: #fff; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; margin-top: 2px; white-space: nowrap;" title="${station.StationName}: ${val} ${unit}">${displayVal}</div></div>`;
