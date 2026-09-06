@@ -432,7 +432,7 @@
         }
         #map { width: 100%; height: 100%; }
         .leaflet-control-attribution { display: none !important; }
-        .leaflet-bottom.leaflet-left { z-index: 1000; }
+        .leaflet-top.leaflet-left { z-index: 1000; }
         .custom-vertical-legend {
             background: var(--legend-bg);
             backdrop-filter: blur(8px);
@@ -445,14 +445,32 @@
             margin: 10px;
             min-width: 120px;
         }
+        .legend-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--action-border);
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+        }
         .legend-header-title {
             font-weight: 700;
             font-size: 11px;
-            margin-bottom: 6px;
-            text-align: center;
             color: #38bdf8;
-            border-bottom: 1px solid var(--action-border);
-            padding-bottom: 3px;
+        }
+        .legend-toggle-btn {
+            background: none;
+            border: none;
+            color: #38bdf8;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0 2px;
+        }
+        .legend-body {
+            display: block;
+        }
+        .legend-body.collapsed {
+            display: none;
         }
         .legend-scale-body {
             display: flex;
@@ -756,6 +774,7 @@
         let currentMapMode = 'temp';
         let currentMarkersLayer = L.layerGroup();
         let legendControl = null;
+        let isLegendCollapsed = false; // 圖例折疊狀態
         let weatherStationData = [];
         let warningData = [];
         let forecastPopData = {};
@@ -1605,7 +1624,6 @@
             const townName = town ? ` (${town})` : '';
             const popVal = getPopForStation(county, town);
             
-            // 使用氣象署預報的 Wx 狀況與圖示，確保與上方及全台預報完全一致
             const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
             const wxInfo = forecastWxData[town] || forecastWxData[county] || { text: '晴時多雲', code: '1' };
             const iconObj = getCWAWeatherIconObj(wxInfo.code, isNight);
@@ -1714,8 +1732,10 @@
                 maxZoom: 18
             }).addTo(map);
             map.addLayer(currentMarkersLayer);
+            
+            // 將圖例移至左上方 (topleft)
             const LegendControl = L.Control.extend({
-                options: { position: 'bottomleft' },
+                options: { position: 'topleft' },
                 onAdd: function (map) {
                     const div = L.DomUtil.create('div', 'custom-vertical-legend');
                     div.id = 'verticalLegendBox';
@@ -1736,12 +1756,29 @@
             updateMapLegendUI(mode);
             if (mapInitialized) renderMapMarkers();
         }
+        function toggleLegendCollapse() {
+            isLegendCollapsed = !isLegendCollapsed;
+            const bodyContent = document.getElementById('legendBodyContent');
+            const toggleIcon = document.getElementById('legendToggleIcon');
+            if (bodyContent && toggleIcon) {
+                if (isLegendCollapsed) {
+                    bodyContent.classList.add('collapsed');
+                    toggleIcon.className = 'fas fa-chevron-down';
+                } else {
+                    bodyContent.classList.remove('collapsed');
+                    toggleIcon.className = 'fas fa-chevron-up';
+                }
+            }
+        }
         function updateMapLegendUI(mode) {
             const legendBox = document.getElementById('verticalLegendBox');
             if (!legendBox) return;
+            let titleText = '';
+            let innerScaleHtml = '';
+
             if (mode === 'rain') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">雨量 (mm)</div>
+                titleText = '雨量 (mm)';
+                innerScaleHtml = `
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="min-height: 220px;"></div>
                         <div class="legend-labels-list">
@@ -1750,8 +1787,8 @@
                     </div>
                 `;
             } else if (mode === 'pop') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">降雨機率 (%)</div>
+                titleText = '降雨機率 (%)';
+                innerScaleHtml = `
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #94a3b8 0%, #38bdf8 30%, #0284c7 60%, #2563eb 85%, #7c3aed 100%); min-height: 160px;"></div>
                         <div class="legend-labels-list">
@@ -1760,8 +1797,8 @@
                     </div>
                 `;
             } else if (mode === 'temp') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">氣溫 (°C)</div>
+                titleText = '氣溫 (°C)';
+                innerScaleHtml = `
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #003366, #3366CC, #33CCCC, #33CC33, #FFCC00, #FF6600, #FF0000, #990099); min-height: 180px;"></div>
                         <div class="legend-labels-list">
@@ -1770,8 +1807,8 @@
                     </div>
                 `;
             } else if (mode === 'wind' || mode === 'windGust') {
-                legendBox.innerHTML = `
-                    <div class="legend-header-title">${mode === 'wind' ? '風速' : '陣風'} (m/s)</div>
+                titleText = mode === 'wind' ? '風速 (m/s)' : '陣風 (m/s)';
+                innerScaleHtml = `
                     <div class="legend-scale-body">
                         <div class="legend-color-bar-rain" style="background: linear-gradient(to top, #71717a, #3b82f6, #10b981, #facc15, #f97316, #ef4444, #a855f7, #ec4899); min-height: 200px;"></div>
                         <div class="legend-labels-list">
@@ -1780,6 +1817,21 @@
                     </div>
                 `;
             }
+
+            const collapseClass = isLegendCollapsed ? 'collapsed' : '';
+            const iconClass = isLegendCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+
+            legendBox.innerHTML = `
+                <div class="legend-header-container">
+                    <span class="legend-header-title">${titleText}</span>
+                    <button class="legend-toggle-btn" onclick="toggleLegendCollapse()" title="收合/展開圖例">
+                        <i class="${iconClass}" id="legendToggleIcon"></i>
+                    </button>
+                </div>
+                <div class="legend-body ${collapseClass}" id="legendBodyContent">
+                    ${innerScaleHtml}
+                </div>
+            `;
         }
         function getRainColor(rain) {
             if (rain >= 300) return '#FF66FF';
